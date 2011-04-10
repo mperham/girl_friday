@@ -1,5 +1,5 @@
-if RUBY_ENGINE == 'rbx' && Rubinius::VERSION < '1.2.4'
-
+if RUBY_ENGINE == 'rbx' && (Rubinius::VERSION < '1.2.4' || Rubinius::VERSION == '1.2.4dev')
+  puts "Loading rubinius actor monkeypatches" if $testing
   class Actor
 
     # Monkeypatch so this works with Rubinius 1.2.3 (latest).

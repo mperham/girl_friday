@@ -1,1 +1,2 @@
 rvm use rbx
+export RBXOPT=-Xrbc.db=~/.rbxdb

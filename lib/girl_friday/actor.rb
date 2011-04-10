@@ -66,7 +66,7 @@ class Actor
         private_new do |actor|
           Thread.current[:__current_actor__] = actor
           spawned << actor
-          block.call *args
+          block.call(*args)
         end
       end
       spawned.pop
@@ -83,7 +83,7 @@ class Actor
         ensure
           link_complete << Actor.current
         end
-        block.call *args
+        block.call(*args)
       end
       link_complete.pop
     end
@@ -151,7 +151,7 @@ class Actor
     # Lookup a locally named service
     def lookup(name)
       raise ArgumentError, "name must be a symbol" unless Symbol === name
-      @@registered_lock.receive
+      @@registered_lock.pop
       begin
         @@registered[name]
       ensure
@@ -167,7 +167,7 @@ class Actor
         raise ArgumentError, "only actors may be registered"
       end
 
-      @@registered_lock.receive
+      @@registered_lock.pop
       begin
         if actor.nil?
           @@registered.delete(name)
@@ -181,7 +181,7 @@ class Actor
     alias_method :[]=, :register
 
     def _unregister(actor) #:nodoc:
-      @@registered_lock.receive
+      @@registered_lock.pop
       begin
         @@registered.delete_if { |n, a| actor.equal? a }
       ensure
@@ -273,7 +273,7 @@ class Actor
         @lock << nil
         begin
           if filter.timeout?
-            timed_out = @ready.receive_timeout(filter.timeout) == false
+            timed_out = @ready.receive_timeout(filter.timeout) == false # TODO Broken!
           else
             @ready.pop
           end

@@ -31,52 +31,52 @@ module GirlFriday
         supervisor = Actor.current
         ready_workers = []
         extra_work = []
+        proc = Proc.new do
+          loop do
+            work = Actor.receive
+            processor.call(work.msg)
+            supervisor << Ready[Actor.current]
+          end
+        end
 
         Actor.trap_exit = true
         size.times do |x|
           # start N workers
-          ready_workers << Actor.spawn_link do
-            loop do
-              work = Actor.receive
-              processor.call(work.msg)
-              supervisor << Ready[Actor.current]
-            end
-          end
+          ready_workers << Actor.spawn_link(&proc)
         end
 
-      begin
-
-        loop do
-          Actor.receive do |f|
-            f.when(Ready) do |who|
-              if work = extra_work.pop
-                who.this << work
-                drain(ready_workers, extra_work)
-              else
-                ready_workers << who.this
+        begin
+          loop do
+            Actor.receive do |f|
+              f.when(Ready) do |who|
+                if work = extra_work.pop
+                  who.this << work
+                  drain(ready_workers, extra_work)
+                else
+                  ready_workers << who.this
+                end
               end
-            end
-            f.when(Work) do |work|
-              if worker = ready_workers.pop
-                worker << work
-                drain(ready_workers, extra_work)
-              else
-                extra_work << work
+              f.when(Work) do |work|
+                if worker = ready_workers.pop
+                  worker << work
+                  drain(ready_workers, extra_work)
+                else
+                  extra_work << work
+                end
               end
-            end
-            f.when(Actor::DeadActorError) do |exit|
-              print "Actor exited due to: #{exit.reason}\n"
-              # TODO need to respawn crashed worker
+              f.when(Actor::DeadActorError) do |exit|
+                @error_handler.handle(exit.reason)
+                ready_workers << Actor.spawn_link(&proc)
+              end
             end
           end
-        end
 
-      rescue Exception => ex
-        $stderr.print "Fatal error in girl_friday: supervisor for #{name} died.\n"
-        $stderr.print("#{ex}\n")
-        $stderr.print("#{ex.backtrace.join("\n")}\n")
+        rescue Exception => ex
+          $stderr.print "Fatal error in girl_friday: supervisor for #{name} died.\n"
+          $stderr.print("#{ex}\n")
+          $stderr.print("#{ex.backtrace.join("\n")}\n")
+        end
       end
-
     end
 
   end
