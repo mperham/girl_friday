@@ -1,43 +1,37 @@
 require 'thread'
 require 'timeout'
 
-class Mutex
-  public :sleep
-end
-
-# Standard queue with a pop that has a timeout.
 class TimedQueue
   def initialize
     @que = []
     @waiting = []
     @mutex = Mutex.new
+    @resource = ConditionVariable.new
   end
 
   def push(obj)
-    @mutex.synchronize {
+    @mutex.synchronize do
       @que.push obj
-      begin
-        t = @waiting.shift
-        t.wakeup if t
-      rescue ThreadError
-        retry
-      end
-    }
+      @resource.signal
+    end
   end
-
-  alias_method :<<, :push
+  alias << push
 
   def timed_pop(timeout=0.5)
-    @mutex.synchronize {
-      while true
+    while true
+      @mutex.synchronize do
+        @waiting.delete(Thread.current)
         if @que.empty?
           @waiting.push Thread.current
-          raise Timeout::Error if @mutex.sleep(timeout) != 0
+          @resource.wait(@mutex, timeout)
+          raise TimeoutError if @que.empty?
         else
-          return @que.shift
+          retval = @que.shift
+          @resource.signal
+          return retval
         end
       end
-    }
+    end
   end
 
   def empty?
@@ -51,6 +45,4 @@ class TimedQueue
   def length
     @que.length
   end
-  alias_method :size, :length
-
 end
