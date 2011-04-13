@@ -1,7 +1,11 @@
 girl_friday
 ====================
 
-Have a task you want to get done sometime soon but don't want to do it yourself?  Give it to your [girl friday](http://en.wikipedia.org/wiki/Girl_Friday)!
+Have a task you want to get done sometime soon but don't want to do it yourself?  Give it to girl_friday!  From wikipedia:
+
+> The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or
+> one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday
+> alludes to it and may have popularized it.
 
 girl_friday is a Ruby library for performing asynchronous tasks.  Often times you don't want to block a web response by performing some task, like sending an email, so you can just use this gem to perform it in the background.  It works with any Ruby application, including Rails 3 applications.
 
@@ -9,13 +13,11 @@ girl_friday is a Ruby library for performing asynchronous tasks.  Often times yo
 Installation
 ------------------
 
-We recommend using [JRuby](http://jruby.org) or [Rubinius](http://rubini.us) with girl_friday.  Both are excellent options for executing Ruby these days.
+We recommend using [JRuby 1.6+](http://jruby.org) or [Rubinius 2.0+](http://rubini.us) with girl_friday.  Both are excellent options for executing Ruby these days.
 
     gem install girl_friday
 
-Open your Rails application's Gemfile and add:
-
-    gem 'girl_friday'
+girl_friday does not support Ruby 1.8 because of its poor threading support.  Ruby 1.9 will work but not scale well.
 
 
 Usage
@@ -25,15 +27,20 @@ Put girl_friday in your Gemfile:
 
     gem 'girl_friday'
 
-In your Rails app, create a `config/initializers/queues.rb` which defines your queues:
+In your Rails app, create a `config/initializers/girl_friday.rb` which defines your queues:
 
-    QUEUE = GirlFriday::WorkQueue.new('user_email') do |msg|
+    EMAIL_QUEUE = GirlFriday::WorkQueue.new('user_email', :size => 3) do |msg|
       UserMailer.registration_email(msg).deliver
     end
+    IMAGE_QUEUE = GirlFriday::WorkQueue.new('image_crawler', :size => 7) do |msg|
+      ImageCrawler.process(msg)
+    end
+
+:size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database, you'll want to insure that the connection pool is large enough by modifying `config/database.yml`.
 
 In your controller action or model, you can call `#push(msg)`
 
-    QUEUE.push(:type => 'registration_email', :user => { :email => @user.email, :name => @user.name }))
+    EMAIL_QUEUE.push(:email => @user.email, :name => @user.name)
 
 The msg parameter to push is just a Hash whose contents are completely up to you.
 
@@ -43,7 +50,7 @@ Your message processing block should **NOT** access any instance data or variabl
 Error Handling
 --------------------
 
-Your processor block can raise any error; don't worry about needing a begin..rescue block.  Each queue contains a supervisor who will log any exceptions (to stderr or Hoptoad Notifier) and restart a new worker.
+Your processor block can raise any error; don't worry about needing a `begin..rescue` block.  Each queue contains a supervisor who will log any exceptions (to stderr or Hoptoad Notifier) and restart a new worker.
 
 
 More Detail

@@ -31,4 +31,17 @@ class TestGirlFriday < Test::Unit::TestCase
     end
   end
 
+  def test_should_call_callback_when_complete
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('test', :size => 1) do |msg|
+        assert_equal 'foo', msg[:text]
+        'camel'
+      end
+      queue.push(:text => 'foo') do |result|
+        assert_equal 'camel', result
+        cb.call
+      end
+    end
+  end
+
 end

@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Mike Perham"]
   s.email       = ["mperham@gmail.com"]
   s.homepage    = ""
-  s.summary     = s.description = %q{Background processing via Rubinius's actor API}
+  s.summary     = s.description = %q{Background processing, simplified}
 
   s.rubyforge_project = "girl_friday"
 

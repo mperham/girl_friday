@@ -1,7 +1,9 @@
 begin
+  # Rubinius
   require 'actor'
   require 'girl_friday/monkey_patches'
 rescue LoadError
+  # Others
   require 'girl_friday/actor'
 end
 

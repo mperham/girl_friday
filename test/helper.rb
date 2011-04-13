@@ -1,4 +1,7 @@
 $testing = true
+# require 'simplecov'
+# SimpleCov.start
+
 require 'test/unit'
 require 'timed_queue'
 require 'girl_friday'

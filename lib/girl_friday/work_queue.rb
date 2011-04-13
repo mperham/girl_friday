@@ -2,7 +2,7 @@
 module GirlFriday
   class WorkQueue
     Ready = Struct.new(:this)
-    Work = Struct.new(:msg)
+    Work = Struct.new(:msg, :callback)
 
     attr_reader :name
     def initialize(name, options={}, &block)
@@ -11,8 +11,8 @@ module GirlFriday
       create_pool(options[:size] || 5, block)
     end
   
-    def push(work)
-      @supervisor << Work[work]
+    def push(work, &block)
+      @supervisor << Work[work, block]
     end
     alias_method :<<, :push
 
@@ -31,10 +31,11 @@ module GirlFriday
         supervisor = Actor.current
         ready_workers = []
         extra_work = []
-        proc = Proc.new do
+        work_loop = Proc.new do
           loop do
             work = Actor.receive
-            processor.call(work.msg)
+            result = processor.call(work.msg)
+            work.callback.call(result) if work.callback
             supervisor << Ready[Actor.current]
           end
         end
@@ -42,7 +43,7 @@ module GirlFriday
         Actor.trap_exit = true
         size.times do |x|
           # start N workers
-          ready_workers << Actor.spawn_link(&proc)
+          ready_workers << Actor.spawn_link(&work_loop)
         end
 
         begin
@@ -65,8 +66,9 @@ module GirlFriday
                 end
               end
               f.when(Actor::DeadActorError) do |exit|
+                # TODO Provide current message contents as error context
                 @error_handler.handle(exit.reason)
-                ready_workers << Actor.spawn_link(&proc)
+                ready_workers << Actor.spawn_link(&work_loop)
               end
             end
           end
