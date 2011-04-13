@@ -47,19 +47,10 @@ The msg parameter to push is just a Hash whose contents are completely up to you
 Your message processing block should **NOT** access any instance data or variables outside of the block.  That's shared mutable state and dangerous to touch!  I also strongly recommend your queue processor block be **VERY** short, ideally just a method call or two.  You can unit test those methods easily but not the processor block itself.
 
 
-Error Handling
---------------------
-
-Your processor block can raise any error; don't worry about needing a `begin..rescue` block.  Each queue contains a supervisor who will log any exceptions (to stderr or Hoptoad Notifier) and restart a new worker.
-
-
 More Detail
 --------------------
 
-But why not use any of the zillions of other async solutions (Resque, dj, etc)?  Because girl\_friday is easier and more efficient than those solutions: girl_friday runs in your Rails process and uses the actor pattern for safe concurrency.  Because it runs in the same process, you don't have to monitor a separate set of processes, deploy a separate codebase, buy extra memory for those processes, etc.
-
-You do need to write thread-safe code.  This is not hard to do: the actor pattern means that you get a message and process that message.  There is no shared data which requires locks and could lead to deadlock in your application code.  Because girl\_friday does use Threads under the covers, you do need to ensure that your VM can execute Threads efficiently: today this means JRuby or Rubinius.  **To be clear: this gem will work but not scale well on Ruby 1.9.**
-
+Please see the [girl_friday wiki](https://github.com/mperham/girl_friday/wiki) for more detail and advanced options and tuning.
 
 
 Thanks
