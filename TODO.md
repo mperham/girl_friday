@@ -1,7 +1,7 @@
 TODO
 ===============
 
- - job persistence
- - clean shutdown (stop accepting web requests, drain queues)
- - web admin UI with backlog, processing and completed metrics
+ - job persistence (push to redis list)
+ - clean shutdown (drain queues)
+ - web admin UI to surface status() metrics
  - nicer project homepage
