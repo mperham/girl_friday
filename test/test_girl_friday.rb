@@ -1,7 +1,11 @@
 require 'helper'
 
-class TestGirlFriday < Test::Unit::TestCase
-  
+class TestGirlFriday < MiniTest::Unit::TestCase
+
+  class TestErrorHandler
+    include MiniTest::Assertions
+  end
+
   def test_should_process_messages
     async_test do |cb|
       queue = GirlFriday::WorkQueue.new('test') do |msg|
@@ -11,16 +15,12 @@ class TestGirlFriday < Test::Unit::TestCase
       queue.push(:text => 'foo')
     end
   end
-  
-  class TestErrorHandler
-    include Test::Unit::Assertions
-  end
-  
+
   def test_should_handle_worker_error
     async_test do |cb|
       TestErrorHandler.send(:define_method, :handle) do |ex|
-        assert ex.is_a?(RuntimeError)
         assert_equal 'oops', ex.message
+        assert_equal 'RuntimeError', ex.class.name
         cb.call
       end
 
@@ -44,4 +44,37 @@ class TestGirlFriday < Test::Unit::TestCase
     end
   end
 
+  def test_should_provide_status
+    mutex = Mutex.new
+    total = 100
+    count = 0
+    incr = Proc.new do
+      mutex.synchronize do
+        count += 1
+      end
+    end
+
+    async_test do |cb|
+      count = 0
+      queue = GirlFriday::WorkQueue.new('image_crawler', :size => 3) do |msg|
+        incr.call
+        cb.call if count == total
+      end
+      total.times do |idx|
+        queue.push(:text => 'foo')
+      end
+
+      sleep 0.01
+      actual = GirlFriday.status
+      refute_nil actual
+      refute_nil actual['image_crawler']
+      metrics = actual['image_crawler']
+      assert_equal total, metrics[:total_queued]
+      assert_equal 3, metrics[:pool_size]
+      assert_equal 3, metrics[:busy]
+      assert_equal 0, metrics[:ready]
+      assert(metrics[:backlog] > 0)
+      assert(metrics[:total_processed] > 0)
+    end
+  end
 end
