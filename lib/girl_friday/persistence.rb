@@ -27,12 +27,14 @@ module GirlFriday
       end
 
       def push(work)
-        redis.rpush(@key)
+        val = Marshal.dump(work)
+        redis.rpush(@key, val)
       end
       alias_method :<<, :push
 
       def pop
-        redis.lpop(@key)
+        val = redis.lpop(@key)
+        Marshal.load(val) if val
       end
 
       def size
@@ -42,7 +44,7 @@ module GirlFriday
       private
 
       def redis
-        @redis ||= Redis.new(*@opts)
+        @redis ||= ::Redis.new(*@opts)
       end
     end
   end

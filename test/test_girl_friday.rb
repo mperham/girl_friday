@@ -77,4 +77,35 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       assert(metrics[:total_processed] > 0)
     end
   end
+
+  def test_should_persist_with_redis
+    begin
+      require 'redis'
+      redis = Redis.new
+      redis.flushdb
+    rescue LoadError
+      return puts 'Skipping redis test, "redis" gem not found'
+    rescue Errno::ECONNREFUSED
+      return puts 'Skipping redis test, not running locally'
+    end
+
+    mutex = Mutex.new
+    total = 100
+    count = 0
+    incr = Proc.new do
+      mutex.synchronize do
+        count += 1
+      end
+    end
+
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Persistence::Redis) do |msg|
+        incr.call
+        cb.call if count == total
+      end
+      total.times do
+        queue.push(:text => 'foo')
+      end
+    end
+  end
 end

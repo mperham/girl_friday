@@ -16,10 +16,10 @@ module GirlFriday
       @error_handler = (options[:error_handler] || ErrorHandler.default).new
 
       @ready_workers = []
-      @extra_work = []
       @busy_workers = []
       @started_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
+      @persister = (options[:store] || Persistence::InMemory).new(name, (options[:store_config] || []))
       start
     end
   
@@ -35,7 +35,7 @@ module GirlFriday
           :pool_size => @size,
           :ready => @ready_workers.size,
           :busy => @busy_workers.size,
-          :backlog => @extra_work.size,
+          :backlog => @persister.size,
           :total_queued => @total_queued,
           :total_processed => @total_processed,
           :total_errors => @total_errors,
@@ -70,9 +70,9 @@ module GirlFriday
             Actor.receive do |f|
               f.when(Ready) do |who|
                 @total_processed += 1
-                if work = @extra_work.pop
+                if work = @persister.pop
                   who.this << work
-                  drain(@ready_workers, @extra_work)
+                  drain(@ready_workers, @persister)
                 else
                   @busy_workers.delete(who.this)
                   @ready_workers << who.this
@@ -82,9 +82,9 @@ module GirlFriday
                 if worker = @ready_workers.pop
                   @busy_workers << worker
                   worker << work
-                  drain(@ready_workers, @extra_work)
+                  drain(@ready_workers, @persister)
                 else
-                  @extra_work << work
+                  @persister << work
                 end
               end
               f.when(Actor::DeadActorError) do |exit|
