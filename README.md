@@ -17,7 +17,7 @@ We recommend using [JRuby 1.6+](http://jruby.org) or [Rubinius 2.0+](http://rubi
 
     gem install girl_friday
 
-girl_friday does not support Ruby 1.8 because of its poor threading support.  Ruby 1.9 will work but not scale well.
+girl_friday does not support Ruby 1.8 (MRI) because of its poor threading support.  Ruby 1.9 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do **not** use the original mysql gem).
 
 
 Usage
@@ -44,7 +44,7 @@ In your controller action or model, you can call `#push(msg)`
 
 The msg parameter to push is just a Hash whose contents are completely up to you.
 
-Your message processing block should **NOT** access any instance data or variables outside of the block.  That's shared mutable state and dangerous to touch!  I also strongly recommend your queue processor block be **VERY** short, ideally just a method call or two.  You can unit test those methods easily but not the processor block itself.
+Your message processing block should **not** access any instance data or variables outside of the block.  That's shared mutable state and dangerous to touch!  I also strongly recommend your queue processor block be **VERY** short, ideally just a method call or two.  You can unit test those methods easily but not the processor block itself.
 
 
 More Detail
