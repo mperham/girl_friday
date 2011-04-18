@@ -46,7 +46,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
   def test_should_provide_status
     mutex = Mutex.new
-    total = 100
+    total = 200
     count = 0
     incr = Proc.new do
       mutex.synchronize do
@@ -108,4 +108,33 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       end
     end
   end
+
+  def test_should_allow_graceful_shutdown
+    mutex = Mutex.new
+    total = 100
+    count = 0
+    incr = Proc.new do
+      mutex.synchronize do
+        count += 1
+      end
+    end
+
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('shutdown', :size => 2) do |msg|
+        incr.call
+        cb.call if count == total
+      end
+      total.times do
+        queue.push(:text => 'foo')
+      end
+
+      GirlFriday.shutdown!
+      s = queue.status
+      assert_equal 0, s['shutdown'][:busy]
+      assert_equal 2, s['shutdown'][:ready]
+      assert(s['shutdown'][:backlog] > 0)
+      cb.call
+    end
+  end
+
 end

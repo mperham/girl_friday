@@ -1,12 +1,9 @@
 module GirlFriday
 
-  def self.status
-    ObjectSpace.each_object(WorkQueue).inject({}) { |memo, queue| memo.merge(queue.status) }
-  end
-
   class WorkQueue
     Ready = Struct.new(:this)
     Work = Struct.new(:msg, :callback)
+    Shutdown = Struct.new(:callback)
 
     attr_reader :name
     def initialize(name, options={}, &block)
@@ -15,6 +12,7 @@ module GirlFriday
       @processor = block
       @error_handler = (options[:error_handler] || ErrorHandler.default).new
 
+      @shutdown = false
       @ready_workers = []
       @busy_workers = []
       @started_at = Time.now.to_i
@@ -24,8 +22,7 @@ module GirlFriday
     end
   
     def push(work, &block)
-      @total_queued += 1
-      @actor << Work[work, block]
+      @supervisor << Work[work, block]
     end
     alias_method :<<, :push
 
@@ -45,10 +42,47 @@ module GirlFriday
       }
     end
 
+    def shutdown
+      # Runtime state should never be modified by caller thread,
+      # only the Supervisor thread.
+      @supervisor << Shutdown[block_given? ? Proc.new : nil]
+    end
+
     private
 
+    def on_ready(who)
+      @total_processed += 1
+      if !@shutdown && work = @persister.pop
+        who.this << work
+        drain(@ready_workers, @persister)
+      else
+        @busy_workers.delete(who.this)
+        @ready_workers << who.this
+        shutdown_complete if @shutdown && @busy_workers.size == 0
+      end
+    end
+
+    def shutdown_complete
+      begin
+        @when_shutdown.call(self) if @when_shutdown
+      rescue Exception => ex
+        @error_handler.handle(ex)
+      end
+    end
+
+    def on_work(work)
+      @total_queued += 1
+      if !@shutdown && worker = @ready_workers.pop
+        @busy_workers << worker
+        worker << work
+        drain(@ready_workers, @persister)
+      else
+        @persister << work
+      end
+    end
+
     def start
-      @actor = Actor.spawn do
+      @supervisor = Actor.spawn do
         supervisor = Actor.current
         work_loop = Proc.new do
           loop do
@@ -69,27 +103,20 @@ module GirlFriday
           loop do
             Actor.receive do |f|
               f.when(Ready) do |who|
-                @total_processed += 1
-                if work = @persister.pop
-                  who.this << work
-                  drain(@ready_workers, @persister)
-                else
-                  @busy_workers.delete(who.this)
-                  @ready_workers << who.this
-                end
+                on_ready(who)
               end
               f.when(Work) do |work|
-                if worker = @ready_workers.pop
-                  @busy_workers << worker
-                  worker << work
-                  drain(@ready_workers, @persister)
-                else
-                  @persister << work
-                end
+                on_work(work)
+              end
+              f.when(Shutdown) do |stop|
+                @shutdown = true
+                @when_shutdown = stop.callback
+                shutdown_complete if @shutdown && @busy_workers.size == 0
               end
               f.when(Actor::DeadActorError) do |exit|
                 # TODO Provide current message contents as error context
                 @total_errors += 1
+                @busy_workers.delete(exit.actor)
                 @ready_workers << Actor.spawn_link(&work_loop)
                 @error_handler.handle(exit.reason)
               end
@@ -102,15 +129,15 @@ module GirlFriday
           $stderr.print("#{ex.backtrace.join("\n")}\n")
         end
       end
+    end
 
-      def drain(ready, work)
-        # give as much work to as many ready workers as possible
-        todo = ready.size < work.size ? ready.size : work.size
-        todo.times do
-          worker = ready.pop
-          @busy_workers << worker
-          worker << work.pop
-        end
+    def drain(ready, work)
+      # give as much work to as many ready workers as possible
+      todo = ready.size < work.size ? ready.size : work.size
+      todo.times do
+        worker = ready.pop
+        @busy_workers << worker
+        worker << work.pop
       end
     end
 

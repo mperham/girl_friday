@@ -29,14 +29,14 @@ Put girl_friday in your Gemfile:
 
 In your Rails app, create a `config/initializers/girl_friday.rb` which defines your queues:
 
-    EMAIL_QUEUE = GirlFriday::WorkQueue.new('user_email', :size => 3) do |msg|
+    EMAIL_QUEUE = GirlFriday::WorkQueue.new(:user_email, :size => 3) do |msg|
       UserMailer.registration_email(msg).deliver
     end
-    IMAGE_QUEUE = GirlFriday::WorkQueue.new('image_crawler', :size => 7) do |msg|
+    IMAGE_QUEUE = GirlFriday::WorkQueue.new(:image_crawler, :size => 7) do |msg|
       ImageCrawler.process(msg)
     end
 
-:size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database, you'll want to insure that the connection pool is large enough by modifying `config/database.yml`.
+:size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
 
 In your controller action or model, you can call `#push(msg)`
 
@@ -50,7 +50,7 @@ Your message processing block should **not** access any instance data or variabl
 More Detail
 --------------------
 
-Please see the [girl_friday wiki](https://github.com/mperham/girl_friday/wiki) for more detail and advanced options and tuning.
+Please see the [girl_friday wiki](https://github.com/mperham/girl_friday/wiki) for more detail and advanced options and tuning.  You'll find details on queue persistence with Redis, implementing clean shutdown, querying runtime metrics and SO MUCH MORE!
 
 
 Thanks
