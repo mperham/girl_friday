@@ -1,6 +1,11 @@
 $testing = true
+
 # require 'simplecov'
-# SimpleCov.start
+# SimpleCov.start do
+#   add_filter "/actor.rb"
+# end
+
+# rbx is 1.8-mode for another month...
 require 'rubygems'
 require 'minitest/autorun'
 require 'timed_queue'

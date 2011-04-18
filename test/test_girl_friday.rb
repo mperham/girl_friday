@@ -84,7 +84,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       redis = Redis.new
       redis.flushdb
     rescue LoadError
-      return puts 'Skipping redis test, "redis" gem not found'
+      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
     rescue Errno::ECONNREFUSED
       return puts 'Skipping redis test, not running locally'
     end
