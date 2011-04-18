@@ -15,9 +15,9 @@ module GirlFriday
       @shutdown = false
       @ready_workers = []
       @busy_workers = []
-      @started_at = Time.now.to_i
+      @created_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
-      @persister = (options[:store] || Persistence::InMemory).new(name, (options[:store_config] || []))
+      @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
       start
     end
   
@@ -36,8 +36,8 @@ module GirlFriday
           :total_queued => @total_queued,
           :total_processed => @total_processed,
           :total_errors => @total_errors,
-          :uptime => Time.now.to_i - @started_at,
-          :started_at => @started_at,
+          :uptime => Time.now.to_i - @created_at,
+          :created_at => @created_at,
         }
       }
     end

@@ -1,5 +1,5 @@
 module GirlFriday
-  module Persistence
+  module Store
 
     class InMemory
       def initialize(name, options)

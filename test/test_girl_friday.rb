@@ -99,7 +99,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
 
     async_test do |cb|
-      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Persistence::Redis) do |msg|
+      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Store::Redis) do |msg|
         incr.call
         cb.call if count == total
       end

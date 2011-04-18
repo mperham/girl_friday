@@ -24,6 +24,9 @@ module GirlFriday
   # new work; any new work pushed onto the queues will be pushed onto the
   # backlog (and persisted).  This method will block until all queues are
   # quiet or the timeout has passed.
+  #
+  # Note that shutdown! just works with existing queues.  If you create a
+  # new queue, it will act as normal.
   def self.shutdown!(timeout=30)
     queues = []
     ObjectSpace.each_object(WorkQueue).each { |q| queues << q }
@@ -43,6 +46,7 @@ module GirlFriday
     m.synchronize do
       var.wait(m, timeout)
     end
+    count
   end
 
 end
