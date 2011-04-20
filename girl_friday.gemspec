@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Mike Perham"]
   s.email       = ["mperham@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "http://github.com/mperham/girl_friday"
   s.summary     = s.description = %q{Background processing, simplified}
 
   s.rubyforge_project = "girl_friday"
