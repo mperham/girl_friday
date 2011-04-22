@@ -137,4 +137,15 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
   end
 
+  def test_should_create_workers_lazily
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('shutdown', :size => 2) do |msg|
+        assert_equal 1, queue.instance_variable_get(:@ready_workers).size
+        cb.call
+      end
+      assert_nil queue.instance_variable_get(:@ready_workers)
+      queue << 'empty msg'
+    end
+  end
+
 end
