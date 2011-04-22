@@ -54,7 +54,7 @@ module GirlFriday
       @total_processed += 1
       if !@shutdown && work = @persister.pop
         who.this << work
-        drain(@ready_workers, @persister)
+        drain
       else
         @busy_workers.delete(who.this)
         @ready_workers << who.this
@@ -75,7 +75,7 @@ module GirlFriday
       if !@shutdown && worker = @ready_workers.pop
         @busy_workers << worker
         worker << work
-        drain(@ready_workers, @persister)
+        drain
       else
         @persister << work
       end
@@ -131,13 +131,14 @@ module GirlFriday
       end
     end
 
-    def drain(ready, work)
+    def drain
       # give as much work to as many ready workers as possible
-      todo = ready.size < work.size ? ready.size : work.size
+      ps = @persister.size
+      todo = @ready_workers.size < ps ? @ready_workers.size : ps
       todo.times do
-        worker = ready.pop
+        worker = @ready_workers.pop
         @busy_workers << worker
-        worker << work.pop
+        worker << @persister.pop
       end
     end
 
