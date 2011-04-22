@@ -149,4 +149,5 @@ module GirlFriday
     end
 
   end
+  Queue = WorkQueue
 end
