@@ -13,7 +13,6 @@ module GirlFriday
       @error_handler = (options[:error_handler] || ErrorHandler.default).new
 
       @shutdown = false
-      @ready_workers = []
       @busy_workers = []
       @created_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
@@ -30,7 +29,7 @@ module GirlFriday
       { @name => {
           :pid => $$,
           :pool_size => @size,
-          :ready => @ready_workers.size,
+          :ready => ready_workers.size,
           :busy => @busy_workers.size,
           :backlog => @persister.size,
           :total_queued => @total_queued,
@@ -57,7 +56,7 @@ module GirlFriday
         drain
       else
         @busy_workers.delete(who.this)
-        @ready_workers << who.this
+        ready_workers << who.this
         shutdown_complete if @shutdown && @busy_workers.size == 0
       end
     end
@@ -72,7 +71,8 @@ module GirlFriday
 
     def on_work(work)
       @total_queued += 1
-      if !@shutdown && worker = @ready_workers.pop
+
+      if !@shutdown && worker = ready_workers.pop
         @busy_workers << worker
         worker << work
         drain
@@ -81,10 +81,21 @@ module GirlFriday
       end
     end
 
+    def ready_workers
+      @ready_workers ||= begin
+        ready_workers = []
+        @size.times do |x|
+          # start N workers
+          ready_workers << Actor.spawn_link(&@work_loop)
+        end
+        ready_workers
+      end
+    end
+
     def start
       @supervisor = Actor.spawn do
         supervisor = Actor.current
-        work_loop = Proc.new do
+        @work_loop = Proc.new do
           loop do
             work = Actor.receive
             result = @processor.call(work.msg)
@@ -94,11 +105,6 @@ module GirlFriday
         end
 
         Actor.trap_exit = true
-        @size.times do |x|
-          # start N workers
-          @ready_workers << Actor.spawn_link(&work_loop)
-        end
-
         begin
           loop do
             Actor.receive do |f|
@@ -117,7 +123,7 @@ module GirlFriday
                 # TODO Provide current message contents as error context
                 @total_errors += 1
                 @busy_workers.delete(exit.actor)
-                @ready_workers << Actor.spawn_link(&work_loop)
+                ready_workers << Actor.spawn_link(&@work_loop)
                 @error_handler.handle(exit.reason)
               end
             end
@@ -134,9 +140,9 @@ module GirlFriday
     def drain
       # give as much work to as many ready workers as possible
       ps = @persister.size
-      todo = @ready_workers.size < ps ? @ready_workers.size : ps
+      todo = ready_workers.size < ps ? ready_workers.size : ps
       todo.times do
-        worker = @ready_workers.pop
+        worker = ready_workers.pop
         @busy_workers << worker
         worker << @persister.pop
       end
