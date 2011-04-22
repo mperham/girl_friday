@@ -83,12 +83,12 @@ module GirlFriday
 
     def ready_workers
       @ready_workers ||= begin
-        ready_workers = []
+        workers = []
         @size.times do |x|
           # start N workers
-          ready_workers << Actor.spawn_link(&@work_loop)
+          workers << Actor.spawn_link(&@work_loop)
         end
-        ready_workers
+        workers
       end
     end
 
