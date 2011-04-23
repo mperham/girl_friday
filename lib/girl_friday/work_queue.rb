@@ -59,6 +59,9 @@ module GirlFriday
         ready_workers << who.this
         shutdown_complete if @shutdown && @busy_workers.size == 0
       end
+    rescue => ex
+      # Redis network error?  Log and ignore.
+      @error_handler.handle(ex)
     end
 
     def shutdown_complete
@@ -79,6 +82,9 @@ module GirlFriday
       else
         @persister << work
       end
+    rescue => ex
+      # Redis network error?  Log and ignore.
+      @error_handler.handle(ex)
     end
 
     def ready_workers
