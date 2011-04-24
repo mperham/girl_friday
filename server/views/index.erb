@@ -8,39 +8,44 @@
       h1 { font-size: 2em; padding-bottom: 5px;}
       h2 { font-size: 1.5em; padding-bottom: 5px;}
       h3 { font-size: 1.3em; padding-bottom: 5px;}
-      html, body { height: 100%; }
-      body { margin: 0; padding: 0; font-size: 14px; font-family: sans-serif; background-color: #ddd; }
-      #menu { float: left; width: 20%; background-color: #fdd;}
-      #main { float: right; background-color: #dfd; width: 75%;}
-      #content { padding: 10px; width: 100%; }
-      #header { background-color: #ddf; padding: 10px; }
-      .queue { padding-bottom: 20px; }
+      body { margin: 0 auto; width: 1000px; padding: 0; font-size: 14px; font-family: sans-serif; background-color: white; }
+      #header { padding: 10px 0;}
+      #queues { border-collapse: collapse; width: 100%; border: 1px solid black; }
+      #queues TD { border: 1px solid black; padding: 5px; }
+      #queues TH { padding: 5px; text-align: left; background: #444; color: #ddf; border: 1px solid black; }
     </style>
     <div id="header">
       <h1>girl_friday</h1>
     </div>
 
-    <div id="content">
-      <div id="menu">
-        <h2>Queues</h2>
-        <ul>
-          <% @status.keys.each do |name| %>
-            <li><a href="#<%= h name %>"><%= h name %></a>
-          <% end %>
-        </ul>
-      </div>
-
-      <div id="main">
-        <% @status.each_pair do |name, stats| %>
-          <div class="queue">
-            <a name="<%= h name %>">
-            <h3><%= h name %></h3>
-            <p><%= stats.inspect %></p>
-          </div>
-        <% end %>
-      </div>
-
+    <div id="main">
+      <table id="queues">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Busy</th>
+            <th>Backlog</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+      <% @status.keys.sort.each do |name|
+        stats = @status[name]
+        (bg, note) = dashboard(stats)
+         %>
+         <tr style="background-color: <%= bg %>">
+           <td><%= h name %></td>
+           <td><%= stats[:pool_size] %></td>
+           <td><%= stats[:busy] %></td>
+           <td><%= stats[:backlog] %></td>
+           <td><%= note %></td>
+          </tr>
+      <% end %>
+        </tbody>
+      </table>
     </div>
+
   </body>
 </html>
 

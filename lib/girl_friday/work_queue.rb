@@ -7,7 +7,7 @@ module GirlFriday
 
     attr_reader :name
     def initialize(name, options={}, &block)
-      @name = name
+      @name = name.to_s
       @size = options[:size] || 5
       @processor = block
       @error_handler = (options[:error_handler] || ErrorHandler.default).new

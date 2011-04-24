@@ -20,11 +20,30 @@ module GirlFriday
     helpers do
       include Rack::Utils
       alias_method :h, :escape_html
+
+      def dashboard(stats)
+        if stats[:busy] == stats[:pool_size] && stats[:backlog] < stats[:pool_size]
+          ['#ffc', 'Busy']
+        elsif stats[:busy] == stats[:pool_size] && stats[:backlog] >= stats[:pool_size]
+          ['#fcc', 'Busy and Backlogged']
+        else
+          ['white', 'OK']
+        end
+      end
     end
     
     get '/' do
+      redirect "#{request.env['REQUEST_URI']}/status"
+    end
+
+    get '/status' do
       @status = GirlFriday.status
       erb :index
+    end
+
+    get '/status.json' do
+      content_type :json
+      GirlFriday.status.to_json
     end
   end
 end
