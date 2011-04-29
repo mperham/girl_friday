@@ -1,0 +1,25 @@
+@import base;
+@import "compass/layout/grid-background";
+
+html {
+  background: url('/images/background.png');
+}
+
+body
+  @include column-grid-background();
+  font: bold 60px helvetica, arial, sans-serif
+  padding-left: 50px
+  text-align: center
+
+h1
+  margin-top: 70px
+  margin-bottom: 40px
+
+p
+  font-size: 24px
+
+a
+  color: #888
+  text-decoration: none
+  &:hover
+    text-decoration: underline
