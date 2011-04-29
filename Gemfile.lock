@@ -26,4 +26,5 @@ DEPENDENCIES
   haml
   maruku (>= 0.6.0)
   rack
+  sass
   staticmatic

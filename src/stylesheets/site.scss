@@ -1,0 +1,22 @@
+@import "base";
+@import "compass/layout/grid-background";
+@import "compass/css3/text-shadow";
+
+html {
+  background: url('/images/background.png');
+}
+
+body {
+  /* font-family: helvetica, arial, sans-serif; */
+  font-family: Arial;
+  font-family: "Goudy Bookletter 1911", serif;
+  text-align: center; 
+}
+
+header {
+  h1 {
+    font-size: 72px;
+    text-transform: uppercase;
+    @include single-text-shadow;
+  }
+}
