@@ -49,4 +49,13 @@ module GirlFriday
     count
   end
 
+  ##
+  # Hook girl_friday into your process shutdown logic.
+  # Calls shutdown! on the given signal.
+  def self.install_shutdown_hook(signal="QUIT")
+    trap(signal) do
+      GirlFriday.shutdown!
+    end
+  end
 end
+
