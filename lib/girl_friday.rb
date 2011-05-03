@@ -34,28 +34,27 @@ module GirlFriday
     m = Mutex.new
     var = ConditionVariable.new
 
-    queues.each do |q|
-      q.shutdown do |queue|
-        m.synchronize do
-          count -= 1
-          var.signal if count == 0
+    if count > 0
+      queues.each do |q|
+        q.shutdown do |queue|
+          m.synchronize do
+            count -= 1
+            var.signal if count == 0
+          end
         end
       end
-    end
 
-    m.synchronize do
-      var.wait(m, timeout)
+      m.synchronize do
+        var.wait(m, timeout)
+      end
+      #puts "girl_friday shutdown complete"
     end
     count
   end
 
-  ##
-  # Hook girl_friday into your process shutdown logic.
-  # Calls shutdown! on the given signal.
-  def self.install_shutdown_hook(signal="QUIT")
-    trap(signal) do
-      GirlFriday.shutdown!
-    end
-  end
+end
+
+at_exit do
+  GirlFriday.shutdown!
 end
 
