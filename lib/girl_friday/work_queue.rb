@@ -5,6 +5,7 @@ module GirlFriday
     Work = Struct.new(:msg, :callback)
     Shutdown = Struct.new(:callback)
 
+
     attr_reader :name
     def initialize(name, options={}, &block)
       @name = name.to_s
@@ -18,6 +19,7 @@ module GirlFriday
       @total_processed = @total_errors = @total_queued = 0
       @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
       start
+      GirlFriday.queues << WeakRef.new(self)
     end
   
     def push(work, &block)

@@ -128,7 +128,8 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         queue.push(:text => 'foo')
       end
 
-      GirlFriday.shutdown!
+      count = GirlFriday.shutdown!
+      assert_equal 0, count
       s = queue.status
       assert_equal 0, s['shutdown'][:busy]
       assert_equal 2, s['shutdown'][:ready]

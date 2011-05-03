@@ -1,4 +1,5 @@
 require 'thread'
+require 'weakref'
 begin
   # Rubinius
   require 'actor'
@@ -15,8 +16,13 @@ require 'girl_friday/persistence'
 
 module GirlFriday
 
+  @@queues = []
+  def self.queues
+    @@queues
+  end
+
   def self.status
-    ObjectSpace.each_object(WorkQueue).inject({}) { |memo, queue| memo.merge(queue.status) }
+    queues.delete_if { |q| !q.weakref_alive? }.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.status) : memo }
   end
 
   ##
@@ -27,14 +33,16 @@ module GirlFriday
   #
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
+  #
+  # WeakRefs make this method full of race conditions with GC. :-(
   def self.shutdown!(timeout=30)
-    queues = []
-    ObjectSpace.each_object(WorkQueue).each { |q| queues << q }
+    queues.delete_if { |q| !q.weakref_alive? }
     count = queues.size
-    m = Mutex.new
-    var = ConditionVariable.new
 
     if count > 0
+      m = Mutex.new
+      var = ConditionVariable.new
+
       queues.each do |q|
         q.shutdown do |queue|
           m.synchronize do
