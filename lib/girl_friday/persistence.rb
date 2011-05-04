@@ -23,7 +23,7 @@ module GirlFriday
     class Redis
       def initialize(name, options)
         @opts = options
-        @key = "girl_friday-#{name}"
+        @key = "girl_friday-#{name}-#{environment}"
       end
 
       def push(work)
@@ -42,6 +42,10 @@ module GirlFriday
       end
 
       private
+
+      def environment
+        ENV['RACK_ENV'] || ENV['RAILS_ENV'] || 'none'
+      end
 
       def redis
         @redis ||= ::Redis.new(*@opts)
