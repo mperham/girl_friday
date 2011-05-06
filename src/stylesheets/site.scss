@@ -1,6 +1,8 @@
 @import "base";
 @import "compass/layout/grid-background";
 @import "compass/css3/text-shadow";
+@import "compass/utilities/general/clearfix";
+@import "_mixins";
 
 html {
   background: url('/images/background.png');
@@ -10,13 +12,59 @@ body {
   /* font-family: helvetica, arial, sans-serif; */
   font-family: Arial;
   font-family: "Goudy Bookletter 1911", serif;
-  text-align: center; 
+  color: #02314d;
+  width: 960px;
+  margin: 0 auto;
+}
+
+h1, h2, h3, h4, h5 {
+  color: black;
+}
+
+h3 {
+  font-size: 48px;
+}
+
+#wrapper {
+  @include debug-border(blue);
+  width: 700px;
+  margin-left: 180px;
+}
+
+section {
 }
 
 header {
-  h1 {
-    font-size: 72px;
-    text-transform: uppercase;
-    @include single-text-shadow;
+  @include debug-border(green);
+  @include clearfix();
+  margin: 40px 0 0 0;
+  .slogan {
+    @include debug-border(red);
+    padding: 10px 0 0 50px;
+    float: left;
+    p {
+      font-size: 20px;
+      margin: 14px 0;
+      &.catch-phrase {
+        font-style: italic;
+        text-decoration: underline;
+      }
+    }
+    h1 {
+      font-size: 72px;
+      font-variant: small-caps;
+      @include single-text-shadow;
+    }
+  }
+  img {
+    float: left;
+    height: 160px;
   }
 }
+
+blockquote {
+  border-left: 5px solid #ed1b24;
+  color: #555555;
+  margin: 14px 0;
+  padding-left: 18px;
+} 

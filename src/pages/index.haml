@@ -3,7 +3,21 @@
 - @body_class = "content"
 - @page_description = "girl_friday is a Ruby library for performing asynchronous tasks"
 
-%section
-  %header
-    = img "girl.png"
+%header
+  = img "girl.png"
+  .slogan
     %h1 Girl Friday
+    %p Have a task you want to get done sometime soon but don't want to do it yourself?
+    %p.catch-phrase Give it to girl_friday!
+  %nav
+  %ul
+    %li 
+
+#wrapper
+  %blockquote
+    %p The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday alludes to it and may have popularized it.
+  %h3 Installation
+  %p We recommend using JRuby 1.6+ or Rubinius 2.0+ with girl_friday. Both are excellent options for executing Ruby these days.
+  %p.code gem install girl_friday
+  %p Note: girl_friday does not support Ruby 1.8 (MRI) because of its poor threading support. Ruby 1.9 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do not use the original mysql gem).
+

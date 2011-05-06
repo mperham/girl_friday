@@ -1,0 +1,6 @@
+@mixin debug-border($color: red, $enabled: false) {
+  @if $enabled == true {
+    outline: 1px solid $color;
+  }
+}
+
