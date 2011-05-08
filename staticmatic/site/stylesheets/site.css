@@ -417,7 +417,7 @@ ol.CodeRay li {
 }
 
 html {
-  background: url("/images/background.png");
+  background: url("../images/background.png");
 }
 
 body {
