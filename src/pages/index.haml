@@ -18,6 +18,48 @@
     %p The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday alludes to it and may have popularized it.
   %h3 Installation
   %p We recommend using JRuby 1.6+ or Rubinius 2.0+ with girl_friday. Both are excellent options for executing Ruby these days.
-  %p.code gem install girl_friday
+
+  = partial('gem_install')
+  
   %p Note: girl_friday does not support Ruby 1.8 (MRI) because of its poor threading support. Ruby 1.9 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do not use the original mysql gem).
+
+  = partial('init_sample')
+
+  %p 
+    \:size is the number of workers to spin up and defaults to 5. Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying
+    %span config/database.yml.
+  %p
+    In your controller action or model, you can call
+    %span #push(msg)
+
+  = partial('email_queue_push')
+
+  %p The msg parameter to push is just a Hash whose contents are completely up to you.
+
+  %p 
+    Your message processing block should 
+    %strong not 
+    access any instance data or variables outside of the block. That's shared mutable state and dangerous to touch! I also strongly recommend your queue processor block be 
+    %strong VERY 
+    short, ideally just a method call or two. You can unit test those methods easily but not the processor block itself.
+
+  %h3 More Detail
+  %p 
+    Please see the 
+    %a{:href => 'https://github.com/mperham/girl_friday/wiki'} girl_friday wiki 
+    for more detail and advanced options and tuning. You'll find details on queue persistence with Redis, implementing clean shutdown, querying runtime metrics and SO MUCH MORE!
+
+  %h3 Thanks
+  %p
+    %a{:href => 'http://www.carbonfive.com'} Carbon Five
+    , I write and maintain girl_friday on their clock.
+  %p This gem contains a copy of the Rubinius Actor API, modified to work on any Ruby VM. Thanks to Evan Phoenix, MenTaLguY, and the Rubinius project for permission to use and distribute this code.
+
+  %h3 Author
+  %p 
+    Mike Perham,
+    %a{:href => 'htp://www.twitter.com/mperham'} @mperham
+    ,
+    %a{:href => 'http://www.mikeperham.com'} mikeperham.com
+
 
