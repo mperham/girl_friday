@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Girl Friday - Girl Friday</title>
-    <meta content="girl_friday is a Ruby library for performing asynchronous tasks" name="description">
+    <title>Girl Friday - girl_friday</title>
+    <meta content="girl_friday - background processing for Ruby" name="description">
     <link href="./stylesheets/site.css" media="all" rel="stylesheet" type="text/css">
     <script language="javascript" src="http://www.google.com/jsapi" type="text/javascript"></script>
     <script>
@@ -15,62 +15,70 @@
     <script language="javascript" src="javascripts/modernizr-1.5.min.js" type="text/javascript"></script><script language="javascript" src="javascripts/application.js" type="text/javascript"></script>
   </head>
   <body class="index content">
-    <header>
+    <nav>
+        <ul>
+          <li>
+            <a href="http://blog.carbonfive.com/2011/04/20/asynchronous-processing-with-girl_friday/">Introduction</a>
+          </li>
+          <li>
+            <a href="http://blog.carbonfive.com/2011/04/19/concurrency-with-actors/">Actors</a>
+          </li>
+          <li>
+            <a href="http://www.mikeperham.com/">Blog</a>
+          </li>
+          <li>
+            <a href="http://github.com/mperham/girl_friday/wiki">Wiki</a>
+          </li>
+          <li>
+            <a href="http://github.com/mperham/girl_friday">Source</a>
+          </li>
+        </ul>
+      </nav>
+      <header>
         <img alt="Girl" src="images/girl.png">
         <div class="slogan">
           <h1>Girl Friday</h1>
-          <p>Have a task you want to get done sometime soon but don't want to do it yourself?</p>
-          <p class="catch-phrase">Give it to girl_friday!</p>
+          <p>Simple and efficient background processing for Ruby!</p>
         </div>
-        <nav></nav>
-        <ul>
-          <li></li>
-        </ul>
       </header>
       <div id="wrapper">
-        <blockquote>
-          <p>The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday alludes to it and may have popularized it.</p>
-        </blockquote>
         <h3>Installation</h3>
-        <p>We recommend using JRuby 1.6+ or Rubinius 2.0+ with girl_friday. Both are excellent options for executing Ruby these days.</p>
-        <table class="CodeRay"><tr>&#x000A;  <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }">gem install girl_friday<tt>&#x000A;</tt></pre></td>&#x000A;</tr></table>
-        <p>Note: girl_friday does not support Ruby 1.8 (MRI) because of its poor threading support. Ruby 1.9 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do not use the original mysql gem).</p>
-        <table class="CodeRay">&#x000A;  <tr>&#x000A;  <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }"><span class="co">EMAIL_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:user_email</span>, <span class="sy">:size</span> =&gt; <span class="i">3</span>) <span class="r">do</span> |msg|<tt>&#x000A;</tt>    <span class="co">UserMailer</span>.registration_email(msg).deliver<tt>&#x000A;</tt><span class="r">end</span><tt>&#x000A;</tt><span class="co">IMAGE_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:image_crawler</span>, <span class="sy">:size</span> =&gt; <span class="i">7</span>) <span class="r">do</span> |msg|<tt>&#x000A;</tt>    <span class="co">ImageCrawler</span>.process(msg)<tt>&#x000A;</tt><span class="r">end</span><tt>&#x000A;</tt></pre></td>&#x000A;</tr></table>
         <p>
-          :size is the number of workers to spin up and defaults to 5. Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying
-          <span>config/database.yml.</span>
+          Add girl_friday to your application's
+          <tt>Gemfile:</tt>
         </p>
+        <table class="CodeRay"><tr>&#x000A;  <td class="code">&#x000A;  <pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }">gem 'girl_friday'</pre>&#x000A;</td>
+        </tr></table>
+        <p>
+          Then you declare your application's required background processors in
+          <code>config/initializers/girl_friday.rb:</code>
+        </p>
+        <table class="CodeRay">&#x000A;  <tr>&#x000A;  <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }"><span class="co">EMAIL_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:user_email</span>) <span class="r">do</span> |msg|<tt>&#x000A;</tt>    <span class="co">UserMailer</span>.registration_email(msg).deliver<tt>&#x000A;</tt><span class="r">end</span><tt>&#x000A;</tt><span class="co">IMAGE_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:image_crawler</span>) <span class="r">do</span> |msg|<tt>&#x000A;</tt>    <span class="co">ImageCrawler</span>.process(msg)<tt>&#x000A;</tt><span class="r">end</span><tt>&#x000A;</tt></pre></td>&#x000A;</tr></table>
         <p>
           In your controller action or model, you can call
-          <span>#push(msg)</span>
+          <tt>push(msg):</tt>
         </p>
         <table class="CodeRay"><tr>&#x000A;  <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }"><span class="co">EMAIL_QUEUE</span>.push(<span class="sy">:email</span> =&gt; <span class="iv">@user</span>.email, <span class="sy">:name</span> =&gt; <span class="iv">@user</span>.name)<tt>&#x000A;</tt></pre></td>&#x000A;</tr></table>
         <p>The msg parameter to push is just a Hash whose contents are completely up to you.</p>
-        <p>
-          Your message processing block should
-          <strong>not</strong>
-          access any instance data or variables outside of the block. That's shared mutable state and dangerous to touch! I also strongly recommend your queue processor block be
-          <strong>VERY</strong>
-          short, ideally just a method call or two. You can unit test those methods easily but not the processor block itself.
-        </p>
         <h3>More Detail</h3>
         <p>
           Please see the
           <a href="https://github.com/mperham/girl_friday/wiki">girl_friday wiki</a>
-          for more detail and advanced options and tuning. You'll find details on queue persistence with Redis, implementing clean shutdown, querying runtime metrics and SO MUCH MORE!
+          for more detail and advanced options and tuning. You'll find details on queue persistence with Redis, usage with Heroku, implementing clean shutdown, querying runtime metrics and so much more!
         </p>
-        <h3>Thanks</h3>
-        <p>
-          <a href="http://www.carbonfive.com">Carbon Five</a>
-          , I write and maintain girl_friday on their clock.
-        </p>
-        <p>This gem contains a copy of the Rubinius Actor API, modified to work on any Ruby VM. Thanks to Evan Phoenix, MenTaLguY, and the Rubinius project for permission to use and distribute this code.</p>
+        <blockquote>
+          <p>The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday alludes to it and may have popularized it.</p>
+        </blockquote>
         <h3>Author</h3>
         <p>
-          Mike Perham,
+          Mike Perham
           <a href="htp://www.twitter.com/mperham">@mperham</a>
-          ,
           <a href="http://www.mikeperham.com">mikeperham.com</a>
+        </p>
+        <p class="kudos">
+          Site design by Chad Seeger (
+          <a href="htp://www.twitter.com/cs44">@cs44</a>
+          )
         </p>
       </div>
   </body>

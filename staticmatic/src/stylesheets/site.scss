@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  font-family: "Goudy Bookletter 1911", serif;
+  font-family: "HelveticaNeue-Light","Helvetica Neue",Helvetica, arial, sans-serif;
   color: #02314d;
   width: 960px;
   margin: 0 auto;
@@ -37,8 +37,9 @@ h3 {
 
 #wrapper {
   @include debug-border(blue);
-  width: 700px;
-  margin-left: 180px;
+  width: 780px;
+  margin-left: 150px;
+  clear: both;
 }
 
 strong {
@@ -47,12 +48,13 @@ strong {
 
 header {
   @include debug-border(green);
-  @include clearfix();
-  margin: 40px 0 0 0;
+  margin: 20px 0 0 0;
   .slogan {
+    width: 750px;
     @include debug-border(red);
-    padding: 10px 0 0 50px;
     float: left;
+    padding-left: 20px;
+    padding-bottom: 20px;
     p {
       font-size: 20px;
       margin: 14px 0;
@@ -70,9 +72,36 @@ header {
   }
 }
 
+a {
+  font-weight: bold;
+  color: #022840;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+nav {
+  float: right;
+  padding: 20px;
+  margin: auto;
+  ul {
+    font-size: 24px;
+    li {
+      display: inline;
+      padding: 5px 10px;
+    }
+  }
+}
+
 p {
   margin: 20px 0;
   letter-spacing: .5px;
+}
+
+.kudos {
+  float: right;
+  font-size: 0.9em;
 }
 
 blockquote {
@@ -80,4 +109,9 @@ blockquote {
   color: #555555;
   margin: 14px 0;
   padding-left: 18px;
-} 
+}
+
+code, tt {
+  font-family: Monaco, 'Courier New', monospace;
+  font-size: 14px;
+}

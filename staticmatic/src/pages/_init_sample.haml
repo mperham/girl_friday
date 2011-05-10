@@ -1,10 +1,10 @@
 :preserve
   <table class="CodeRay">
     <tr>
-    <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }"><span class="co">EMAIL_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:user_email</span>, <span class="sy">:size</span> =&gt; <span class="i">3</span>) <span class="r">do</span> |msg|<tt>
+    <td class="code"><pre ondblclick="with (this.style) { overflow = (overflow == 'auto' || overflow == '') ? 'visible' : 'auto' }"><span class="co">EMAIL_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:user_email</span>) <span class="r">do</span> |msg|<tt>
   </tt>    <span class="co">UserMailer</span>.registration_email(msg).deliver<tt>
   </tt><span class="r">end</span><tt>
-  </tt><span class="co">IMAGE_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:image_crawler</span>, <span class="sy">:size</span> =&gt; <span class="i">7</span>) <span class="r">do</span> |msg|<tt>
+  </tt><span class="co">IMAGE_QUEUE</span> = <span class="co">GirlFriday</span>::<span class="co">WorkQueue</span>.new(<span class="sy">:image_crawler</span>) <span class="r">do</span> |msg|<tt>
   </tt>    <span class="co">ImageCrawler</span>.process(msg)<tt>
   </tt><span class="r">end</span><tt>
   </tt></pre></td>
