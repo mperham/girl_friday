@@ -1,5 +1,7 @@
 require 'thread'
 require 'weakref'
+require 'celluloid'
+
 begin
   # Rubinius
   require 'actor'
@@ -13,6 +15,8 @@ require 'girl_friday/version'
 require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
+require 'girl_friday/runner'
+require 'girl_friday/worker'
 
 module GirlFriday
 
