@@ -145,7 +145,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         assert_equal 1, queue.instance_variable_get(:@ready_workers).size
         cb.call
       end
-      assert_nil queue.instance_variable_get(:@ready_workers)
+      refute queue.instance_variable_defined?(:@ready_workers)
       # don't instantiate the worker threads until we actually put
       # work onto the queue.
       queue << 'empty msg'
