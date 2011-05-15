@@ -17,13 +17,17 @@ module GirlFriday
       @processor = block
       @error_handler = opts[:error_handler].new
       
+      @created_at = Time.now.to_i
       @ready_workers = []
-      @total_processed = @total_errors = @total_workers = 0
+      @busy_workers = 0
+      @total_processed = @total_errors = @total_queued = @total_workers = 0
       @persister = opts[:store].new(name, (options[:store_config] || []))
+      @total_queued = @persister.size
     end
     
     # Add work to the queue
     def push(params = {}, &callback)
+      @total_queued += 1
       job = Job[params, callback]
       worker = @ready_workers.pop
       
@@ -40,6 +44,7 @@ module GirlFriday
         @total_workers += 1
       end
       
+      @busy_workers += 1
       worker.work! job
     end
     alias_method :<<, :push
@@ -48,7 +53,14 @@ module GirlFriday
       {
         :pid => $$,
         :pool_size => @size,
-        :total_processed => @total_processed
+        :ready => @ready_workers.size,
+        :busy => @busy_workers,
+        :backlog => @persister.size,
+        :total_queued => @total_queued,
+        :total_processed => @total_processed,
+        :total_errors => @total_errors,
+        :uptime => Time.now.to_i - @created_at,
+        :created_at => @created_at
       }
     end
     
@@ -59,6 +71,7 @@ module GirlFriday
     
     # Handle ready events from workers
     def on_ready(worker, error)
+      @busy_workers -= 1
       @total_processed += 1
       
       if job = @persister.pop
@@ -77,7 +90,16 @@ module GirlFriday
     end
     
     def inspect
-      "#<GirlFriday::Runner processed: #{@total_processed}, pool size: #{@size}>"
+      fields = {
+        :processed => @total_processed,
+        :backlog   => @persister.size,
+        :pool      => @size
+      }
+      
+      
+      str = "#<GirlFriday::Runner "
+      str << fields.map { |k, v| "#{k}=#{v}" }.join(', ')
+      str << ">"
     end
   end
 end
