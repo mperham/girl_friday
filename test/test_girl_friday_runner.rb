@@ -9,12 +9,12 @@ class TestGirlFridayRunner < MiniTest::Unit::TestCase
   def test_honor_size_option
     size = 42
     
-    runner = GirlFriday::Runner.spawn :size => size
+    runner = GirlFriday::Runner.spawn :sized_queue, :size => size
     assert_equal size, runner.status[:pool_size]
   end
   
   def test_shutdown
-    runner = GirlFriday::Runner.spawn
+    runner = GirlFriday::Runner.spawn :soon_to_be_dead_queue
     runner.shutdown
     
     begin
@@ -23,5 +23,17 @@ class TestGirlFridayRunner < MiniTest::Unit::TestCase
     end
     
     assert_equal Celluloid::DeadActorError, ex.class
+  end
+  
+  def test_does_work
+    queue = Queue.new
+    
+    runner = GirlFriday::Runner.spawn(:test) { |args| queue << args[:obj] }
+    assert_equal 0, runner.status[:total_processed]
+    
+    test_object = 42
+    runner.push :obj => test_object
+    
+    assert_equal test_object, queue.pop
   end
 end
