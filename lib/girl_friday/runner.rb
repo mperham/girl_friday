@@ -1,4 +1,6 @@
 module GirlFriday
+  Job = Struct.new(:params, :callback)
+  
   class Runner
     include Celluloid::Actor
     
@@ -15,14 +17,15 @@ module GirlFriday
       @processor = block
       @error_handler = opts[:error_handler].new
       
-      @idle_workers = []
-      @total_processed = @total_workers = 0
+      @ready_workers = []
+      @total_processed = @total_errors = @total_workers = 0
       @persister = opts[:store].new(name, (options[:store_config] || []))
     end
     
     # Add work to the queue
-    def push(job)
-      worker = @idle_workers.pop
+    def push(params = {}, &callback)
+      job = Job[params, callback]
+      worker = @ready_workers.pop
       
       unless worker
         # Have we spawned all the workers allowed in the pool?
@@ -50,21 +53,28 @@ module GirlFriday
     end
     
     def shutdown
-      @idle_workers.each { |worker| worker.terminate }
+      @ready_workers.each { |worker| worker.terminate }
       terminate
     end
     
-    def on_ready(worker)
+    # Handle ready events from workers
+    def on_ready(worker, error)
       @total_processed += 1
       
-      job = @persister.pop
-      
-      if job
+      if job = @persister.pop
         @worker.work! job
       else
-        @idle_workers << worker
+        @ready_workers << worker
       end
-    end    
+      
+      on_error error if error
+    end
+    
+    # Handle exit messages from workers
+    def on_error(reason)
+      @total_errors += 1
+      @error_handler.handle reason
+    end
     
     def inspect
       "#<GirlFriday::Runner processed: #{@total_processed}, pool size: #{@size}>"

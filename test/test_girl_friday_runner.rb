@@ -48,4 +48,33 @@ class TestGirlFridayRunner < MiniTest::Unit::TestCase
     
     assert_equal 1, runner.status[:total_processed]
   end
+  
+  def test_runs_callbacks
+    queue = Queue.new
+    runner = GirlFriday::Runner.spawn(:test) { |args| args[:n] + 40 }
+    runner.push(:n => 2) { |result| queue << result }
+    
+    assert_equal 42, queue.pop
+  end
+  
+  ErrorQueue = Queue.new
+  
+  class TestErrorHandler
+    def handle(ex)
+      ErrorQueue << ex
+    end
+  end
+  
+  class RunnerTestError < StandardError; end
+  
+  def test_handles_errors
+    example_error = RunnerTestError.new "this is a test of the emergency error handling system"
+    
+    runner = GirlFriday::Runner.spawn :test, :error_handler => TestErrorHandler do
+      raise example_error
+    end
+    
+    runner.push
+    assert_equal example_error, ErrorQueue.pop
+  end
 end

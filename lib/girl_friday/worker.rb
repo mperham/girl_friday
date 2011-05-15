@@ -6,9 +6,14 @@ module GirlFriday
       @runner, @processor = runner, processor
     end
     
-    def work(params)
-      @processor[params]
-      @runner.on_ready self
+    def work(job)
+      begin
+        result = @processor[job.params]
+        job.callback.call result if job.callback
+      rescue Exception => error
+      end
+      
+      @runner.on_ready! self, error
     end
     
     def inspect
