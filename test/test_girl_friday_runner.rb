@@ -17,8 +17,11 @@ class TestGirlFridayRunner < MiniTest::Unit::TestCase
     runner = GirlFriday::Runner.spawn
     runner.shutdown
     
-    sleep 0.1 # hax: give it some time to shut down
+    begin
+      runner.status
+    rescue => ex
+    end
     
-    assert_equal false, runner.alive?
+    assert_equal Celluloid::DeadActorError, ex.class
   end
 end
