@@ -29,26 +29,17 @@ module GirlFriday
     def push(params = {}, &callback)
       @total_queued += 1
       job = Job[params, callback]
-      worker = @ready_workers.pop
       
-      unless worker
-        # Have we spawned all the workers allowed in the pool?
-        if @total_workers == @size
-          @persister << job
-          return
-        end
-        
-        # Spawn a new worker if we haven't hit the limit for the queue 
-        worker = Worker.spawn_link(Celluloid.current_actor, &@processor)
-        
-        @total_workers += 1
+      if worker = reserve_worker
+        @busy_workers += 1
+        worker.work! job
+      else
+        @persister << job
       end
-      
-      @busy_workers += 1
-      worker.work! job
     end
     alias_method :<<, :push
     
+    # Obtain the queue status
     def status
       {
         :pid => $$,
@@ -64,6 +55,7 @@ module GirlFriday
       }
     end
     
+    # Terminate the work queue
     def shutdown
       @ready_workers.each { |worker| worker.terminate }
       terminate
@@ -100,6 +92,19 @@ module GirlFriday
       str = "#<GirlFriday::Runner "
       str << fields.map { |k, v| "#{k}=#{v}" }.join(', ')
       str << ">"
+    end
+    
+    # Reserve a worker, either from the pool or by creating one
+    def reserve_worker
+      worker = @ready_workers.pop
+      return worker if worker
+      
+      # If we're reached the pool size we're at capacity
+      return if @total_workers == @size
+        
+      # Spawn a new worker if we haven't hit the limit for the queue 
+      @total_workers += 1
+      Worker.spawn_link(Celluloid.current_actor, &@processor)
     end
   end
 end
