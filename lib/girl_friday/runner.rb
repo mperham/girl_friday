@@ -23,6 +23,8 @@ module GirlFriday
       @total_processed = @total_errors = @total_queued = @total_workers = 0
       @persister = opts[:store].new(name, (options[:store_config] || []))
       @total_queued = @persister.size
+      
+      drain
     end
     
     # Add work to the queue
@@ -31,7 +33,6 @@ module GirlFriday
       job = Job[params, callback]
       
       if worker = reserve_worker
-        @busy_workers += 1
         worker.work! job
       else
         @persister << job
@@ -63,12 +64,12 @@ module GirlFriday
     
     # Handle ready events from workers
     def on_ready(worker, error)
-      @busy_workers -= 1
       @total_processed += 1
       
       if job = @persister.pop
         @worker.work! job
       else
+        @busy_workers -= 1
         @ready_workers << worker
       end
       
@@ -88,7 +89,6 @@ module GirlFriday
         :pool      => @size
       }
       
-      
       str = "#<GirlFriday::Runner "
       str << fields.map { |k, v| "#{k}=#{v}" }.join(', ')
       str << ">"
@@ -96,15 +96,27 @@ module GirlFriday
     
     # Reserve a worker, either from the pool or by creating one
     def reserve_worker
-      worker = @ready_workers.pop
-      return worker if worker
+      if worker = @ready_workers.pop
+        @busy_workers += 1
+        return worker
+      end
       
       # If we're reached the pool size we're at capacity
       return if @total_workers == @size
         
       # Spawn a new worker if we haven't hit the limit for the queue 
       @total_workers += 1
+      @busy_workers += 1
+      
       Worker.spawn_link(Celluloid.current_actor, &@processor)
+    end
+    
+    # Drain the work queue until we're at capacity
+    def drain
+      until @persister.size == 0
+        break unless worker = reserve_worker
+        worker.work! @persister.pop
+      end
     end
   end
 end
