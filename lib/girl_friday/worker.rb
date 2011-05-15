@@ -8,6 +8,7 @@ module GirlFriday
     
     def work(params)
       @processor[params]
+      @runner.on_ready self
     end
     
     def inspect

@@ -21,13 +21,13 @@ module GirlFriday
     end
     
     # Add work to the queue
-    def push(params)
+    def push(job)
       worker = @idle_workers.pop
       
       unless worker
         # Have we spawned all the workers allowed in the pool?
         if @total_workers == @size
-          @persister << params
+          @persister << job
           return
         end
         
@@ -37,7 +37,7 @@ module GirlFriday
         @total_workers += 1
       end
       
-      worker.work! params
+      worker.work! job
     end
     alias_method :<<, :push
     
@@ -56,7 +56,14 @@ module GirlFriday
     
     def on_ready(worker)
       @total_processed += 1
-      puts "#{worker.inspect}: standing by"
+      
+      job = @persister.pop
+      
+      if job
+        @worker.work! job
+      else
+        @idle_workers << worker
+      end
     end    
     
     def inspect
