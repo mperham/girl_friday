@@ -1,4 +1,5 @@
 module GirlFriday
+  # Job processing actor
   class Worker
     include Celluloid::Actor
     

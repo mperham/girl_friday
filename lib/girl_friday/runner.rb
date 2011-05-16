@@ -1,7 +1,8 @@
 module GirlFriday
-  Job = Struct.new(:params, :callback)
-  
+  # Job runner actor
   class Runner
+    Job = Struct.new(:params, :callback)
+    
     include Celluloid::Actor
     
     def initialize(name, options = {}, &block)
@@ -65,6 +66,19 @@ module GirlFriday
       @error_handler.handle ex
     end
     
+    # Generate a string representation
+    def inspect
+      fields = {
+        :processed => @total_processed,
+        :backlog   => @persister.size,
+        :pool      => @size
+      }
+      
+      str = "#<GirlFriday::Runner:#{object_id} "
+      str << fields.map { |k, v| "#{k}=#{v}" }.join(', ')
+      str << ">"
+    end
+    
     # Handle ready events from workers
     def on_ready(worker, error)
       @total_processed += 1
@@ -79,22 +93,14 @@ module GirlFriday
       on_error error if error
     end
     
+    #######
+    private
+    #######
+    
     # Handle exit messages from workers
     def on_error(reason)
       @total_errors += 1
       @error_handler.handle reason
-    end
-    
-    def inspect
-      fields = {
-        :processed => @total_processed,
-        :backlog   => @persister.size,
-        :pool      => @size
-      }
-      
-      str = "#<GirlFriday::Runner "
-      str << fields.map { |k, v| "#{k}=#{v}" }.join(', ')
-      str << ">"
     end
     
     # Reserve a worker, either from the pool or by creating one
