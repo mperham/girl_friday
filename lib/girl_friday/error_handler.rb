@@ -15,7 +15,7 @@ module GirlFriday
   class ErrorHandler
     class Hoptoad
       def handle(ex)
-        HoptoadNotifier.notify(ex)
+        HoptoadNotifier.notify_or_ignore(ex)
       end
     end
   end
