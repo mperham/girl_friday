@@ -59,7 +59,10 @@ module GirlFriday
     # Terminate the work queue
     def shutdown
       @ready_workers.each { |worker| worker.terminate }
+      yield if block_given?
       terminate
+    rescue Exception => ex
+      @error_handler.handle ex
     end
     
     # Handle ready events from workers
