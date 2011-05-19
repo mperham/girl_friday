@@ -14,7 +14,7 @@ module GirlFriday
       rescue Exception => error
       end
       
-      @runner.on_ready! self, error
+      @runner.on_ready! Celluloid.current_actor, error
     end
     
     def inspect
