@@ -1,18 +1,13 @@
 require 'thread'
 require 'weakref'
-begin
-  # Rubinius
-  require 'actor'
-  require 'girl_friday/monkey_patches'
-rescue LoadError
-  # Others
-  require 'girl_friday/actor'
-end
+require 'celluloid'
 
 require 'girl_friday/version'
 require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
+require 'girl_friday/runner'
+require 'girl_friday/worker'
 
 module GirlFriday
 
