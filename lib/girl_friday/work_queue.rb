@@ -22,8 +22,16 @@ module GirlFriday
       GirlFriday.queues << WeakRef.new(self)
     end
   
-    def push(work, &block)
-      @supervisor << Work[work, block]
+    if defined?(Rails) && Rails.env.development?
+      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility"
+      def push(work)
+        result = @processor.call(work)
+        yield result if block_given?
+      end
+    else
+      def push(work, &block)
+        @supervisor << Work[work, block]
+      end
     end
     alias_method :<<, :push
 

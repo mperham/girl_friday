@@ -3,7 +3,8 @@ source 'http://rubygems.org'
 gem 'rails', '3.0.7'
 gem 'girl_friday', :path => '..'
 gem 'sinatra'
-gem 'rainbows'
+#gem 'rainbows'
+gem 'jruby-openssl' if RUBY_ENGINE == 'jruby'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'

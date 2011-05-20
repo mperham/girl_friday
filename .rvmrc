@@ -1,2 +1,2 @@
-rvm use rbx
+rvm use jruby-1.6.1@gf
 export RBXOPT=-Xrbc.db=~/.rbxdb
