@@ -16,7 +16,7 @@ module GirlFriday
     set :views,  "#{basedir}/views"
     set :public, "#{basedir}/public"
     set :static, true
-    
+
     helpers do
       include Rack::Utils
       alias_method :h, :escape_html
@@ -30,10 +30,19 @@ module GirlFriday
           ['white', 'OK']
         end
       end
+
+      def url_path(*path_parts)
+        [path_prefix, path_parts].join('/').squeeze('/')
+      end
+      alias_method :u, :url_path
+
+      def path_prefix
+        request.env['SCRIPT_NAME']
+      end
     end
-    
-    get '/' do
-      redirect "#{request.env['REQUEST_URI']}/status"
+
+    get '/?' do
+      redirect url_path('status')
     end
 
     get '/status' do
