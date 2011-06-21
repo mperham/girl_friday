@@ -4,6 +4,12 @@ require 'girl_friday'
 
 
 ##
+# In this example, we use girl_friday to implement a processing pipeline
+# for scraping large images from a website.  Given a URL, we want to fetch
+# the HTML for that URL, find all the images, download those images, discard images
+# which do not meet a size heuristic and save the ones that match.  This
+# processing is I/O-heavy and perfect for breaking into many threads.
+#
 # A processing pipeline is just a series of linked processing steps.
 # We create a girl_friday queue for each step, sized appropriately for how few/many parallel worker threads we want for that step.
 # The process_xxx methods implement the actual logic for the step.
