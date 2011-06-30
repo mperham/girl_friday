@@ -5,7 +5,6 @@ module GirlFriday
     Work = Struct.new(:msg, :callback)
     Shutdown = Struct.new(:callback)
 
-
     attr_reader :name
     def initialize(name, options={}, &block)
       @name = name.to_s
@@ -21,7 +20,7 @@ module GirlFriday
       start
       GirlFriday.queues << WeakRef.new(self)
     end
-  
+
     if defined?(Rails) && Rails.env.development?
       Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility"
       def push(work)
@@ -49,6 +48,14 @@ module GirlFriday
           :created_at => @created_at,
         }
       }
+    end
+
+    # Busy wait for the queue to empty.
+    # Useful for testing.
+    def wait_for_empty
+      while @persister.size != 0
+        sleep 0.1
+      end
     end
 
     def shutdown
