@@ -259,12 +259,19 @@ class Actor
     begin
       raise @interrupts.shift unless @interrupts.empty?
 
-      for i in 0...(@mailbox.size)
-        message = @mailbox[i]
+      if @mailbox.size > 0
+        message = @mailbox.shift
         action = filter.action_for(message)
-        if action
-          @mailbox.delete_at(i)
-          break
+        unless action
+          @mailbox << message
+          for i in 1...(@mailbox.size)
+            message = @mailbox[i]
+            action = filter.action_for(message)
+            if action
+              @mailbox.delete_at(i)
+              break
+            end
+          end
         end
       end
 
