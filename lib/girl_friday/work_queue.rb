@@ -22,7 +22,7 @@ module GirlFriday
     end
 
     if defined?(Rails) && Rails.env.development?
-      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility"
+      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
       def push(work)
         result = @processor.call(work)
         yield result if block_given?

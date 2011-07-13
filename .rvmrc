@@ -1,2 +1,2 @@
-rvm use jruby-1.6.2@gf --create
+rvm use jruby@gf --create
 export RBXOPT=-Xrbc.db=~/.rbxdb
