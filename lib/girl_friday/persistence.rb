@@ -10,16 +10,16 @@ module GirlFriday
         @backlog << work
       end
       alias_method :<<, :push
-      
+
       def pop
-        @backlog.pop
+        @backlog.shift
       end
-      
+
       def size
         @backlog.size
       end
     end
-    
+
     class Redis
       def initialize(name, options)
         @opts = options
@@ -53,4 +53,3 @@ module GirlFriday
     end
   end
 end
-    
