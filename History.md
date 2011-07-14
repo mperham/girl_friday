@@ -1,6 +1,14 @@
 Changes
 ================
 
+HEAD
+---------
+
+* Remove use of weakrefs to track queue instances, use ObjectSpace
+  instead.
+* Add support for Batch operations, providing an easy way to fan out
+  operations and then collect results when completed.
+
 0.9.1
 ---------
 
