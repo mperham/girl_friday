@@ -7,6 +7,7 @@ module GirlFriday
 
     attr_reader :name
     def initialize(name, options={}, &block)
+      raise ArgumentError, "#{self.class.name} requires a block" unless block_given?
       @name = name.to_s
       @size = options[:size] || 5
       @processor = block
@@ -18,7 +19,6 @@ module GirlFriday
       @total_processed = @total_errors = @total_queued = 0
       @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
       start
-      GirlFriday.queues << WeakRef.new(self)
     end
 
     if defined?(Rails) && Rails.env.development?

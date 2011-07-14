@@ -1,5 +1,4 @@
 require 'thread'
-require 'weakref'
 begin
   # Rubinius
   require 'actor'
@@ -13,16 +12,16 @@ require 'girl_friday/version'
 require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
+require 'girl_friday/batch'
 
 module GirlFriday
 
-  @@queues = []
   def self.queues
-    @@queues
+    ObjectSpace.each_object(GirlFriday::WorkQueue).to_a
   end
 
   def self.status
-    queues.delete_if { |q| !q.weakref_alive? }.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.status) : memo }
+    queues.inject({}) { |memo, queue| memo.merge(queue.status) }
   end
 
   ##
@@ -36,14 +35,14 @@ module GirlFriday
   #
   # WeakRefs make this method full of race conditions with GC. :-(
   def self.shutdown!(timeout=30)
-    queues.delete_if { |q| !q.weakref_alive? }
-    count = queues.size
+    qs = queues
+    count = qs.size
 
     if count > 0
       m = Mutex.new
       var = ConditionVariable.new
 
-      queues.each do |q|
+      qs.each do |q|
         q.shutdown do |queue|
           m.synchronize do
             count -= 1
