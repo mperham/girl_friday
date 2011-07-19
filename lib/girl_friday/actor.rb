@@ -53,7 +53,7 @@ class Actor
     @@registered_lock = Queue.new
     @@registered = {}
     @@registered_lock << nil
-  
+
     def current
       Thread.current[:__current_actor__] ||= private_new
     end
@@ -113,7 +113,7 @@ class Actor
       recipient.notify_exited(current, reason)
       self
     end
-    
+
     # Link the current Actor to another one.
     def link(actor)
       current = self.current
@@ -121,7 +121,7 @@ class Actor
       actor.notify_link current
       self
     end
-    
+
     # Unlink the current Actor from another one
     def unlink(actor)
       current = self.current
@@ -310,7 +310,7 @@ class Actor
       action.call message
     end
   end
- 
+
   # Notify this actor that it's now linked to the given one; this is not
   # intended to be used directly except by actor implementations.  Most
   # users will want to use Actor.link instead.
@@ -329,7 +329,7 @@ class Actor
     actor.notify_exited(self, exit_reason) unless alive
     self
   end
-  
+
   # Notify this actor that it's now unlinked from the given one; this is
   # not intended to be used directly except by actor implementations.  Most
   # users will want to use Actor.unlink instead.
@@ -344,7 +344,7 @@ class Actor
     end
     self
   end
-  
+
   # Notify this actor that one of the Actors it's linked to has exited;
   # this is not intended to be used directly except by actor implementations.
   # Most users will want to use Actor.send_exit instead.
@@ -406,7 +406,7 @@ class Actor
     end
   end
   private :check_thread
-  
+
   def _trap_exit=(value) #:nodoc:
     check_thread
     @lock.pop
@@ -417,7 +417,7 @@ class Actor
       @lock << nil
     end
   end
-  
+
   def _trap_exit #:nodoc:
     check_thread
     @lock.pop
