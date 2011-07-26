@@ -64,4 +64,3 @@ end
 at_exit do
   GirlFriday.shutdown!
 end
-

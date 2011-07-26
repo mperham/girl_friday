@@ -6,6 +6,7 @@ module GirlFriday
     Shutdown = Struct.new(:callback)
 
     attr_reader :name
+
     def initialize(name, options={}, &block)
       raise ArgumentError, "#{self.class.name} requires a block" unless block_given?
       @name = name.to_s
@@ -26,6 +27,12 @@ module GirlFriday
       def push(work)
         result = @processor.call(work)
         yield result if block_given?
+      end
+    elsif $queue_work === false
+      def push(work, &block)
+        result = @processor.call(work)
+        return yield result if block
+        result
       end
     else
       def push(work, &block)
