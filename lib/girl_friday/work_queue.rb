@@ -54,7 +54,7 @@ module GirlFriday
     # Useful for testing.
     def wait_for_empty
       while @persister.size != 0
-        sleep 0.1
+        sleep 0.5
       end
     end
 
@@ -127,28 +127,25 @@ module GirlFriday
           end
         end
 
-        Actor.trap_exit = true
+        #Actor.trap_exit = true
         begin
           loop do
-            Actor.receive do |f|
-              f.when(Ready) do |who|
-                on_ready(who)
-              end
-              f.when(Work) do |work|
-                on_work(work)
-              end
-              f.when(Shutdown) do |stop|
-                @shutdown = true
-                @when_shutdown = stop.callback
-                shutdown_complete if @shutdown && @busy_workers.size == 0
-              end
-              f.when(Actor::DeadActorError) do |exit|
-                # TODO Provide current message contents as error context
-                @total_errors += 1
-                @busy_workers.delete(exit.actor)
-                ready_workers << Actor.spawn_link(&@work_loop)
-                @error_handler.handle(exit.reason)
-              end
+            msg = Actor.receive
+            case msg
+            when Ready
+              on_ready(msg)
+            when Work
+              on_work(msg)
+            when Shutdown
+              @shutdown = true
+              @when_shutdown = msg.callback
+              shutdown_complete if @shutdown && @busy_workers.size == 0
+            when Actor::DeadActorError
+              # TODO Provide current message contents as error context
+              @total_errors += 1
+              @busy_workers.delete(msg.actor)
+              ready_workers << Actor.spawn_link(&@work_loop)
+              @error_handler.handle(exit.reason)
             end
           end
 

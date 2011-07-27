@@ -5,7 +5,7 @@ begin
   require 'girl_friday/monkey_patches'
 rescue LoadError
   # Others
-  require 'girl_friday/actor'
+  require 'girl_friday/fast_actor'
 end
 
 require 'girl_friday/version'

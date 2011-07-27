@@ -30,6 +30,31 @@
 
 require 'thread' # for Queue
 
+include Java
+include_class Java::java.util.concurrent.ConcurrentLinkedQueue
+include_class Java::java.util.concurrent.ConcurrentHashMap
+include_class Java::java.util.concurrent.LinkedBlockingQueue
+ConcurrentMap = java.util.concurrent.ConcurrentHashMap
+BlockingArray = java.util.concurrent.ConcurrentLinkedQueue
+class BlockingArray
+  alias_method :shift, :poll
+end
+BlockingQueue = java.util.concurrent.LinkedBlockingQueue
+class BlockingQueue
+  alias_method :pop, :take
+  alias_method :receive, :take
+  alias_method :put, :<<
+  def as_lock(value=Object)
+    receive
+
+    begin
+      yield
+    ensure
+      self << value
+    end
+  end
+end
+
 class Actor
   class DeadActorError < RuntimeError
     attr_reader :actor
@@ -50,9 +75,7 @@ class Actor
     alias_method :private_new, :new
     private :private_new
 
-    @@registered_lock = Queue.new
-    @@registered = {}
-    @@registered_lock << nil
+    @@registered = ConcurrentMap.new
 
     def current
       Thread.current[:__current_actor__] ||= private_new
@@ -61,7 +84,7 @@ class Actor
     # Spawn a new Actor that will run in its own thread
     def spawn(*args, &block)
       raise ArgumentError, "no block given" unless block
-      spawned = Queue.new
+      spawned = BlockingQueue.new
       Thread.new do
         private_new do |actor|
           Thread.current[:__current_actor__] = actor
@@ -76,7 +99,7 @@ class Actor
     # Atomically spawn an actor and link it to the current actor
     def spawn_link(*args, &block)
       current = self.current
-      link_complete = Queue.new
+      link_complete = BlockingQueue.new
       spawn do
         begin
           Actor.link(current)
@@ -151,12 +174,7 @@ class Actor
     # Lookup a locally named service
     def lookup(name)
       raise ArgumentError, "name must be a symbol" unless Symbol === name
-      @@registered_lock.pop
-      begin
-        @@registered[name]
-      ensure
-        @@registered_lock << nil
-      end
+      @@registered.get(name)
     end
     alias_method :[], :lookup
 
@@ -167,46 +185,36 @@ class Actor
         raise ArgumentError, "only actors may be registered"
       end
 
-      @@registered_lock.pop
-      begin
-        if actor.nil?
-          @@registered.delete(name)
-        else
-          @@registered[name] = actor
-        end
-      ensure
-        @@registered_lock << nil
+      if actor.nil?
+        @@registered.remove(name)
+      else
+        @@registered.put(name, actor)
       end
     end
     alias_method :[]=, :register
 
     def _unregister(actor) #:nodoc:
-      @@registered_lock.pop
-      begin
-        @@registered.delete_if { |n, a| actor.equal? a }
-      ensure
-        @@registered_lock << nil
-      end
+      @@registered.delete_if { |n, a| actor.equal? a }
     end
   end
 
   def initialize
-    @lock = Queue.new
+    @lock = BlockingQueue.new
 
     @filter = nil
-    @ready = Queue.new
+    @ready = BlockingQueue.new
     @action = nil
     @message = nil
 
-    @mailbox = []
-    @interrupts = []
-    @links = []
+    @mailbox = BlockingArray.new
+    @interrupts = BlockingArray.new
+    @links = BlockingArray.new
     @alive = true
     @exit_reason = nil
     @trap_exit = false
     @thread = Thread.current
 
-    @lock << nil
+    @lock << Object
 
     if block_given?
       watchdog { yield self }
@@ -216,23 +224,20 @@ class Actor
   end
 
   def send(message)
-    @lock.pop
-    begin
+    @lock.as_lock do
       return self unless @alive
       if @filter
         @action = @filter.action_for(message)
         if @action
           @filter = nil
           @message = message
-          @ready << nil
+          @ready << Object
         else
           @mailbox << message
         end
       else
         @mailbox << message
       end
-    ensure
-      @lock << nil
     end
     self
   end
@@ -240,11 +245,8 @@ class Actor
 
   def _check_for_interrupt #:nodoc:
     check_thread
-    @lock.pop
-    begin
+    @lock.as_lock do
       raise @interrupts.shift unless @interrupts.empty?
-    ensure
-      @lock << nil
     end
   end
 
@@ -255,11 +257,10 @@ class Actor
     message = nil
     timed_out = false
 
-    @lock.pop
-    begin
+    @lock.as_lock do
       raise @interrupts.shift unless @interrupts.empty?
 
-      if @mailbox.size > 0
+      if !@mailbox.empty?
         message = @mailbox.shift
         action = filter.action_for(message)
         unless action
@@ -277,7 +278,7 @@ class Actor
 
       unless action
         @filter = filter
-        @lock << nil
+        @lock << Object
         begin
           if filter.timeout?
             timed_out = @ready.receive_timeout(filter.timeout) == false # TODO Broken!
@@ -300,8 +301,6 @@ class Actor
 
         raise @interrupts.shift unless @interrupts.empty?
       end
-    ensure
-      @lock << nil
     end
 
     if timed_out
@@ -324,7 +323,7 @@ class Actor
       exit_reason = @exit_reason
       @links << actor if alive and not @links.include? actor
     ensure
-      @lock << nil
+      @lock << Object
     end
     actor.notify_exited(self, exit_reason) unless alive
     self
@@ -340,7 +339,7 @@ class Actor
       return self unless @alive
       @links.delete(actor)
     ensure
-      @lock << nil
+      @lock << Object
     end
     self
   end
@@ -361,11 +360,11 @@ class Actor
         @interrupts << DeadActorError.new(actor, reason)
         if @filter
           @filter = nil
-          @ready << nil
+          @ready << Object
         end
       end
     ensure
-      @lock << nil
+      @lock << Object
     end
     send exit_message if exit_message
     self
@@ -379,16 +378,13 @@ class Actor
     ensure
       links = nil
       Actor._unregister(self)
-      @lock.pop
-      begin
+      @lock.as_lock do
         @alive = false
         @mailbox = nil
         @interrupts = nil
         @exit_reason = reason
         links = @links
         @links = nil
-      ensure
-        @lock << nil
       end
       links.each do |actor|
         begin
@@ -414,7 +410,7 @@ class Actor
       raise @interrupts.shift unless @interrupts.empty?
       @trap_exit = !!value
     ensure
-      @lock << nil
+      @lock << Object
     end
   end
 
@@ -424,7 +420,7 @@ class Actor
     begin
       @trap_exit
     ensure
-      @lock << nil
+      @lock << Object
     end
   end
 end
