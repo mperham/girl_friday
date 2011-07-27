@@ -1,5 +1,7 @@
 $testing = true
-
+unless defined? $queue_work
+  $queue_work = true
+end
 # require 'simplecov'
 # SimpleCov.start do
 #   add_filter "/actor.rb"
