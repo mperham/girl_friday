@@ -6,3 +6,4 @@ gemspec
 # Needed for testing only!
 gem 'minitest'
 gem 'redis'
+gem 'flexmock-minitest'

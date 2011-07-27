@@ -10,6 +10,7 @@ require 'rubygems'
 require 'minitest/autorun'
 require 'timed_queue'
 require 'girl_friday'
+require 'flexmock/minitest'
 
 puts RUBY_DESCRIPTION
 

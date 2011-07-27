@@ -152,4 +152,18 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
   end
 
+  def test_stubbing_girl_friday_with_flexmock
+    expected = Thread.current.to_s
+    actual = nil
+    processor = Proc.new do |msg|
+      actual = Thread.current.to_s
+    end
+    queue = GirlFriday::Queue.new('shutdown', :size => 2, &processor)
+    flexmock(queue).should_receive(:push).zero_or_more_times.and_return do |msg|
+      processor.call(msg)
+    end
+    queue.push 'hello world!'
+    assert_equal expected, actual
+  end
+
 end
