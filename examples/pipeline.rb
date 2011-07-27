@@ -2,7 +2,6 @@ require 'open-uri'
 require 'nokogiri'
 require 'girl_friday'
 
-
 ##
 # In this example, we use girl_friday to implement a processing pipeline
 # for scraping large images from a website.  Given a URL, we want to fetch
@@ -12,8 +11,8 @@ require 'girl_friday'
 #
 # A processing pipeline is just a series of linked processing steps.
 # We create a girl_friday queue for each step, sized appropriately for how few/many parallel worker threads we want for that step.
-# The process_xxx methods implement the actual logic for the step.
-# The finish_xxx methods pass the result to the next step in the pipeline.
+# The process_xxx methods implement the actual logic for the step and pass the
+# result to the next step.
 #
 class ImagePipeline
   def initialize
@@ -25,27 +24,21 @@ class ImagePipeline
 
   def process(url)
     log "Pushing #{url}"
-    @download_html.push({ :url => url }, &method(:finish_html))
+    @download_html.push({ :url => url })
   end
 
   private
 
   def process_html(msg)
-    msg.merge(:htmlfile => open(msg[:url]))
-  end
-
-  def finish_html(result)
-    @extract_imgs.push(result, &method(:finish_extract))
+    result = msg.merge(:htmlfile => open(msg[:url]))
+    @extract_imgs.push(result)
   end
 
   def process_extract(msg)
     doc = Nokogiri::HTML(msg[:htmlfile].read)
-    doc.css('img[src]').map{|n| n['src']}.select { |url| url =~ /^#{msg[:url]}/ }
-  end
-
-  def finish_extract(result)
+    result = doc.css('img[src]').map{|n| n['src']}.select { |url| url =~ /^#{msg[:url]}/ }
     result.each do |imgurl|
-      @download_imgs.push(imgurl, &method(:finish_imgs))
+      @download_imgs.push(imgurl)
     end
   end
 
@@ -58,21 +51,12 @@ class ImagePipeline
     return unless result =~ /(\d+)x(\d+)\+0\+0/
     return if Integer($1) + Integer($2) < 500
     # Passed all our heuristics, pass it on!
-    imgfile
-  end
-
-  def finish_imgs(result)
-    return unless result
-    @thumb.push(result, &method(:finish_thumb))
+    @thumb.push(imgfile)
   end
 
   def process_thumb(msg)
     FileUtils.cp msg.path, Time.now.to_f.to_s
-    msg.path
-  end
-
-  def finish_thumb(result)
-    log "Finished image at #{result}"
+    log "Finished image at #{msg.path}"
   end
 
   def log(msg)
