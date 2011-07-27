@@ -34,6 +34,23 @@ module GirlFriday
     end
     alias_method :<<, :push
 
+    def self.immediate!
+      alias_method :orig_push, :push
+      alias_method :push, :push_immediately
+      alias_method :<<, :push_immediately
+    end
+
+    def self.queue!
+      alias_method :push, :orig_push
+      alias_method :<<, :push
+    end
+
+    def push_immediately(work, &block)
+      result = @processor.call(work)
+      return yield result if block
+      result
+    end
+
     def status
       { @name => {
           :pid => $$,
