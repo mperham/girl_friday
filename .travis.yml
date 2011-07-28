@@ -2,3 +2,7 @@ rvm:
   - 1.9.2
   - jruby
   - rbx
+branches:
+  only:
+    - master
+env: JRUBY_OPTS='--1.9 -X+O -J-Djruby.launch.inproc=false'
