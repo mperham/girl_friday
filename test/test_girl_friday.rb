@@ -54,29 +54,28 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       end
     end
 
+    actual = nil
     async_test do |cb|
-      count = 0
       queue = GirlFriday::WorkQueue.new('image_crawler', :size => 3) do |msg|
-        incr.call
-        cb.call if count == total
+        mycount = incr.call
+        actual = queue.status if mycount == 100
+        cb.call if mycount == total
       end
       total.times do |idx|
         queue.push(:text => 'foo')
       end
-
-      sleep 0.01
-      actual = GirlFriday.status
-      refute_nil actual
-      refute_nil actual['image_crawler']
-      metrics = actual['image_crawler']
-      assert metrics[:total_queued] > 0
-      assert metrics[:total_queued] <= total
-      assert_equal 3, metrics[:pool_size]
-      assert_equal 3, metrics[:busy]
-      assert_equal 0, metrics[:ready]
-      assert(metrics[:backlog] > 0)
-      assert(metrics[:total_processed] > 0)
     end
+
+    refute_nil actual
+    refute_nil actual['image_crawler']
+    metrics = actual['image_crawler']
+    assert metrics[:total_queued] > 0
+    assert metrics[:total_queued] <= total
+    assert_equal 3, metrics[:pool_size]
+    assert_equal 3, metrics[:busy]
+    assert_equal 0, metrics[:ready]
+    assert(metrics[:backlog] > 0)
+    assert(metrics[:total_processed] > 0)
   end
 
   def test_should_persist_with_redis
