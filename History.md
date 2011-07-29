@@ -8,7 +8,8 @@ HEAD
   instead.
 * Add support for Batch operations, providing an easy way to fan out
   operations and then collect results when completed.
-* [jc00ke](https://github.com/jc00ke) added WorkQueue.immediate! and WorkQueue.queue! to switch background processing off and back on respectively. Nice to use when testing.
+* Added WorkQueue.immediate! and WorkQueue.queue! to switch background processing off and back on respectively. Nice to use when testing.
+* Added some ajax updates to the girl\_friday status server.
 
 0.9.1
 ---------
