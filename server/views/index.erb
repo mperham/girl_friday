@@ -1,19 +1,9 @@
 <html>
   <head>
     <title>girl_friday status</title>
-    <link href="<%=u 'css/style.css' %>" media="screen" rel="stylesheet" type="text/css">
+    <link href="<%=u 'css/style.css' %>" media="screen" rel="stylesheet" type="text/css" />
   </head>
   <body>
-    <style>
-      h1 { font-size: 2em; padding-bottom: 5px;}
-      h2 { font-size: 1.5em; padding-bottom: 5px;}
-      h3 { font-size: 1.3em; padding-bottom: 5px;}
-      body { margin: 0 auto; width: 1000px; padding: 0; font-size: 14px; font-family: sans-serif; background-color: white; }
-      #header { padding: 10px 0;}
-      #queues { border-collapse: collapse; width: 100%; border: 1px solid black; }
-      #queues TD { border: 1px solid black; padding: 5px; }
-      #queues TH { padding: 5px; text-align: left; background: #444; color: #ddf; border: 1px solid black; }
-    </style>
     <div id="header">
       <h1>girl_friday</h1>
     </div>
@@ -32,20 +22,20 @@
         <tbody>
       <% @status.keys.sort.each do |name|
         stats = @status[name]
-        (bg, note) = dashboard(stats)
          %>
-         <tr style="background-color: <%= bg %>">
-           <td><%= h name %></td>
-           <td><%= stats[:pool_size] %></td>
-           <td><%= stats[:busy] %></td>
-           <td><%= stats[:backlog] %></td>
-           <td><%= note %></td>
+         <tr id="<%= h name %>">
+           <td class="name">></td>
+           <td class="pool_size">></td>
+           <td class="busy">></td>
+           <td class="backlog">></td>
+           <td class="note"></td>
           </tr>
       <% end %>
         </tbody>
       </table>
     </div>
 
+    <script src="<%= u 'js/jquery.min.js' %>"></script>
+    <script src="<%= u 'js/girl_friday.js' %>"></script>
   </body>
 </html>
-
