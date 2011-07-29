@@ -21,16 +21,6 @@ module GirlFriday
       include Rack::Utils
       alias_method :h, :escape_html
 
-      def dashboard(stats)
-        if stats[:busy] == stats[:pool_size] && stats[:backlog] < stats[:pool_size]
-          ['#ffc', 'Busy']
-        elsif stats[:busy] == stats[:pool_size] && stats[:backlog] >= stats[:pool_size]
-          ['#fcc', 'Busy and Backlogged']
-        else
-          ['white', 'OK']
-        end
-      end
-
       def url_path(*path_parts)
         [path_prefix, path_parts].join('/').squeeze('/')
       end
