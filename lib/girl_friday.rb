@@ -32,8 +32,6 @@ module GirlFriday
   #
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
-  #
-  # WeakRefs make this method full of race conditions with GC. :-(
   def self.shutdown!(timeout=30)
     qs = queues
     count = qs.size
