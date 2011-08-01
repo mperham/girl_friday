@@ -21,29 +21,27 @@ module GirlFriday
       start
     end
 
-    if defined?(Rails) && Rails.env.development?
-      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
-      def push(work)
-        result = @processor.call(work)
-        yield result if block_given?
-      end
-    else
-      def push(work, &block)
-        @supervisor << Work[work, block]
-      end
-    end
-    alias_method :<<, :push
-
     def self.immediate!
-      alias_method :orig_push, :push
       alias_method :push, :push_immediately
       alias_method :<<, :push_immediately
     end
 
     def self.queue!
-      alias_method :push, :orig_push
-      alias_method :<<, :push
+      alias_method :push, :original_push
+      alias_method :<<, :original_push
     end
+
+    if defined?(Rails) && Rails.env.development?
+      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
+      def original_push(work, &block)
+        push_immediately(work, &block)
+      end
+    else
+      def original_push(work, &block)
+        @supervisor << Work[work, block]
+      end
+    end
+    queue!
 
     def push_immediately(work, &block)
       result = @processor.call(work)
@@ -70,7 +68,7 @@ module GirlFriday
     # Busy wait for the queue to empty.
     # Useful for testing.
     def wait_for_empty
-      while @persister.size != 0
+      until @persister.size == 0
         sleep 0.1
       end
     end
@@ -124,7 +122,7 @@ module GirlFriday
     def ready_workers
       @ready_workers ||= begin
         workers = []
-        @size.times do |x|
+        @size.times do
           # start N workers
           workers << Actor.spawn_link(&@work_loop)
         end
