@@ -27,27 +27,26 @@ module GirlFriday
     end
 
     def self.queue!
-      alias_method :push, :original_push
-      alias_method :<<, :original_push
+      alias_method :push, :push_async
+      alias_method :<<, :push_async
     end
-
-    if defined?(Rails) && Rails.env.development?
-      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
-      def original_push(work, &block)
-        push_immediately(work, &block)
-      end
-    else
-      def original_push(work, &block)
-        @supervisor << Work[work, block]
-      end
-    end
-    queue!
 
     def push_immediately(work, &block)
       result = @processor.call(work)
       return yield result if block
       result
     end
+
+    if defined?(Rails) && Rails.env.development?
+      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
+      alias :push_async, :push_immediately
+    else
+      def push_async(work, &block)
+        @supervisor << Work[work, block]
+      end
+    end
+    alias_method :push, :push_async
+    alias_method :<<, :push_async
 
     def status
       { @name => {
