@@ -1,7 +1,7 @@
 Changes
 ================
 
-HEAD
+0.9.2
 ---------
 
 * Remove use of weakrefs to track queue instances, use ObjectSpace
