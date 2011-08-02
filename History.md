@@ -1,6 +1,11 @@
 Changes
 ================
 
+0.9.3
+---------
+
+* Fix runtime error introduced in last release when running in Rails development environment
+
 0.9.2
 ---------
 
