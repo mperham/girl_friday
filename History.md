@@ -10,6 +10,7 @@ HEAD
   operations and then collect results when completed.
 * Added WorkQueue.immediate! and WorkQueue.queue! to switch background processing off and back on respectively. Nice to use when testing.
 * Added some ajax updates to the girl\_friday status server.
+* Changed WorkQueue.immediate! and WorkQueue.queue! to be idempotent operations, can also now be invoked in any order
 
 0.9.1
 ---------
