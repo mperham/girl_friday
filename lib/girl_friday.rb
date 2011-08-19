@@ -59,7 +59,12 @@ module GirlFriday
 
 end
 
-at_exit do
-  GirlFriday.shutdown!
+begin
+  ObjectSpace.each_object(GirlFriday).to_a
+  at_exit do
+    GirlFriday.shutdown!
+  end
+rescue RuntimeError
+  $stderr.puts "[warn] girl_friday will not shut down cleanly, pass -X+O to JRuby to enable ObjectSpace"
 end
 
