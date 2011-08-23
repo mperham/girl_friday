@@ -112,7 +112,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
   def test_should_persist_with_redis_instance
     begin
       require 'redis'
-      redis = Redis.new(:path => '/tmp/redis.sock')
+      redis = Redis.new
       redis.flushdb
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
