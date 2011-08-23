@@ -109,6 +109,37 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
   end
 
+  def test_should_persist_with_redis_instance
+    begin
+      require 'redis'
+      redis = Redis.new(:path => '/tmp/redis.sock')
+      redis.flushdb
+    rescue LoadError
+      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
+    rescue Errno::ECONNREFUSED
+      return puts 'Skipping redis test, not running locally accepting connections over UNIX socket'
+    end
+
+    mutex = Mutex.new
+    total = 100
+    count = 0
+    incr = Proc.new do
+      mutex.synchronize do
+        count += 1
+      end
+    end
+
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
+        incr.call
+        cb.call if count == total
+      end
+      total.times do
+        queue.push(:text => 'foo')
+      end
+    end
+  end
+
   def test_should_allow_graceful_shutdown
     mutex = Mutex.new
     total = 100
