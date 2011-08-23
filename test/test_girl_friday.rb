@@ -81,12 +81,11 @@ class TestGirlFriday < MiniTest::Unit::TestCase
   def test_should_persist_with_redis
     begin
       require 'redis'
+      require 'fakeredis'
       redis = Redis.new
       redis.flushdb
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
-    rescue Errno::ECONNREFUSED
-      return puts 'Skipping redis test, not running locally'
     end
 
     mutex = Mutex.new
