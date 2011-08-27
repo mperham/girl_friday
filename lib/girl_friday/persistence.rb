@@ -48,7 +48,7 @@ module GirlFriday
       end
 
       def redis
-        @redis ||= ::Redis.new(*@opts)
+        @redis ||= (@opts.delete(:redis) || ::Redis.new(*@opts))
       end
     end
   end

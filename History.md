@@ -1,6 +1,11 @@
 Changes
 ================
 
+0.9.4
+---------
+
+* You can now pass in an existing Redis instance - :store\_config => [{ :redis => $redis }]
+
 0.9.3
 ---------
 

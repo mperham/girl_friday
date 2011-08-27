@@ -36,6 +36,14 @@ In your Rails app, create a `config/initializers/girl_friday.rb` which defines y
       ImageCrawler.process(msg)
     end
 
+    SCRAPE_QUEUE = GirlFriday::WorkQueue.new(:scrape_sites, :size => 4, :store => GirlFriday::Store::Redis, :store_config => [{ :host => 'host' }] do |msg|
+      Page.scrape(msg)
+    end
+
+    TRANSCODE_QUEUE = GirlFriday::WorkQueue.new(:scrape_sites, :size => 4, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => $redis }] do |msg|
+      VideoProcessor.transcode(msg)
+    end
+
 :size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
 
 In your controller action or model, you can call `#push(msg)`
@@ -47,7 +55,6 @@ The msg parameter to push is just a Hash whose contents are completely up to you
 Your message processing block should **not** access any instance data or variables outside of the block.  That's shared mutable state and dangerous to touch!  I also strongly recommend your queue processor block be **VERY** short, ideally just a method call or two.  You can unit test those methods easily but not the processor block itself.
 
 You can call `GirlFriday::WorkQueue.immediate!` to process jobs immediately, which is helpful when testing. `GirlFriday::WorkQueue.queue!` will revert this & jobs will be processed by actors.
-
 
 More Detail
 --------------------
