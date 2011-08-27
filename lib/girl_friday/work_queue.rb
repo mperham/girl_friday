@@ -37,13 +37,8 @@ module GirlFriday
       result
     end
 
-    if defined?(Rails) && Rails.env.development?
-      Rails.logger.debug "[girl_friday] Starting in single-threaded mode for Rails autoloading compatibility" if Rails.logger
-      alias_method :push_async, :push_immediately
-    else
-      def push_async(work, &block)
-        @supervisor << Work[work, block]
-      end
+    def push_async(work, &block)
+      @supervisor << Work[work, block]
     end
     alias_method :push, :push_async
     alias_method :<<, :push_async
