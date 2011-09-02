@@ -19,6 +19,7 @@ module GirlFriday
         HoptoadNotifier.notify_or_ignore(ex)
       end
     end
+    Airbrake = Hoptoad
 
   end
 end
