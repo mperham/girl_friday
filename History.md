@@ -1,6 +1,11 @@
 Changes
 ================
 
+HEAD
+---------
+
+* Allow stacking of error handlers, fixes GH-11
+
 0.9.4
 ---------
 

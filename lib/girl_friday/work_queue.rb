@@ -11,7 +11,7 @@ module GirlFriday
       @name = name.to_s
       @size = options[:size] || 5
       @processor = block
-      @error_handler = (options[:error_handler] || ErrorHandler.default).new
+      @error_handlers = (Array(options[:error_handler]) || ErrorHandler.default).map(&:new)
 
       @shutdown = false
       @busy_workers = []
@@ -87,14 +87,14 @@ module GirlFriday
       end
     rescue => ex
       # Redis network error?  Log and ignore.
-      @error_handler.handle(ex)
+      @error_handlers.each { |handler| handler.handle(ex) }
     end
 
     def shutdown_complete
       begin
         @when_shutdown.call(self) if @when_shutdown
       rescue Exception => ex
-        @error_handler.handle(ex)
+        @error_handlers.each { |handler| handler.handle(ex) }
       end
     end
 
@@ -110,7 +110,7 @@ module GirlFriday
       end
     rescue => ex
       # Redis network error?  Log and ignore.
-      @error_handler.handle(ex)
+      @error_handlers.each { |handler| handler.handle(ex) }
     end
 
     def ready_workers
@@ -151,12 +151,12 @@ module GirlFriday
                 @when_shutdown = stop.callback
                 shutdown_complete if @shutdown && @busy_workers.size == 0
               end
-              f.when(Actor::DeadActorError) do |exit|
+              f.when(Actor::DeadActorError) do |ex|
                 # TODO Provide current message contents as error context
                 @total_errors += 1
-                @busy_workers.delete(exit.actor)
+                @busy_workers.delete(ex.actor)
                 ready_workers << Actor.spawn_link(&@work_loop)
-                @error_handler.handle(exit.reason)
+                @error_handlers.each { |handler| handler.handle(ex.reason) }
               end
             end
           end

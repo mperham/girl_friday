@@ -1,22 +1,24 @@
 module GirlFriday
-  class ErrorHandler
-    def handle(ex)
-      $stderr.puts(ex)
-      $stderr.puts(ex.backtrace.join("\n"))
-    end
-    
-    def self.default
-      defined?(HoptoadNotifier) ? Hoptoad : self
-    end
-  end
-end
+  module ErrorHandler
 
-module GirlFriday
-  class ErrorHandler
+    def self.default
+      handlers = [Stderr]
+      handlers << Hoptoad if defined?(HoptoadNotifier)
+      handlers
+    end
+
+    class Stderr
+      def handle(ex)
+        $stderr.puts(ex)
+        $stderr.puts(ex.backtrace.join("\n"))
+      end
+    end
+
     class Hoptoad
       def handle(ex)
         HoptoadNotifier.notify_or_ignore(ex)
       end
     end
+
   end
 end
