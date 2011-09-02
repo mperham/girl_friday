@@ -164,7 +164,6 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       s = queue.status
       assert_equal 0, s['shutdown'][:busy]
       assert_equal 2, s['shutdown'][:ready]
-      assert(s['shutdown'][:backlog] > 0)
       cb.call
     end
   end
