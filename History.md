@@ -4,6 +4,8 @@ Changes
 HEAD
 ---------
 
+* Switch Redis.new to Redis.connect so an :url option can be passed in.
+  Nice for using on Heroku with Redis To Go.
 * Allow stacking of error handlers, fixes GH-11
 
 0.9.4
