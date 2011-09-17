@@ -117,7 +117,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
     rescue Errno::ECONNREFUSED
-      return puts 'Skipping redis test, not running locally accepting connections over UNIX socket'
+      return puts 'Skipping redis test, not running locally'
     end
 
     mutex = Mutex.new
