@@ -4,7 +4,6 @@ require 'timeout'
 class TimedQueue
   def initialize
     @que = []
-    @waiting = []
     @mutex = Mutex.new
     @resource = ConditionVariable.new
   end
@@ -20,9 +19,7 @@ class TimedQueue
   def timed_pop(timeout=0.5)
     while true
       @mutex.synchronize do
-        @waiting.delete(Thread.current)
         if @que.empty?
-          @waiting.push Thread.current
           @resource.wait(@mutex, timeout)
           raise TimeoutError if @que.empty?
         else
