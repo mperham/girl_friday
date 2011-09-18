@@ -4,7 +4,8 @@ Changes
 HEAD
 ---------
 
-* Switch Redis.new to Redis.connect so an :url option can be passed in.
+* Can now pass a [connection\_pool](https://github.com/mperham/connection_pool) in as a Redis instance.
+* Switch Redis.new to Redis.connect so a :url option can be passed in.
   Nice for using on Heroku with Redis To Go.
 * Allow stacking of error handlers, fixes GH-11
 
