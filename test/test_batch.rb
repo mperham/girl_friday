@@ -23,12 +23,12 @@ class TestBatch < MiniTest::Unit::TestCase
 
   def test_batch_timeout
     work = [0.1] * 4
-    work[2] = 0.3
+    work[2] = 0.4
     batch = GirlFriday::Batch.new(work, :size => 4) do |msg|
       sleep msg
       'x'
     end
-    results = batch.results(0.2)
+    results = batch.results(0.3)
     assert_equal 'x', results[0]
     assert_equal 'x', results[1]
     assert_nil results[2]

@@ -25,6 +25,7 @@ module GirlFriday
     def results(timeout=nil)
       @lock.synchronize do
         @condition.wait(@lock, timeout) if @complete != @size
+        @queue.shutdown
         @results
       end
     end

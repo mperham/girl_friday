@@ -84,7 +84,6 @@ module GirlFriday
       else
         @busy_workers.delete(who.this)
         ready_workers << who.this
-        shutdown_complete if @shutdown && @busy_workers.size == 0
       end
     rescue => ex
       # Redis network error?  Log and ignore.
@@ -129,39 +128,19 @@ module GirlFriday
       @supervisor = Actor.spawn do
         supervisor = Actor.current
         @work_loop = Proc.new do
-          loop do
+          while !@shutdown do
             work = Actor.receive
-            result = @processor.call(work.msg)
-            work.callback.call(result) if work.callback
-            supervisor << Ready[Actor.current]
+            if !@shutdown
+              result = @processor.call(work.msg)
+              work.callback.call(result) if work.callback
+              supervisor << Ready[Actor.current]
+            end
           end
         end
 
         Actor.trap_exit = true
         begin
-          loop do
-            Actor.receive do |f|
-              f.when(Ready) do |who|
-                on_ready(who)
-              end
-              f.when(Work) do |work|
-                on_work(work)
-              end
-              f.when(Shutdown) do |stop|
-                @shutdown = true
-                @when_shutdown = stop.callback
-                shutdown_complete if @shutdown && @busy_workers.size == 0
-              end
-              f.when(Actor::DeadActorError) do |ex|
-                # TODO Provide current message contents as error context
-                @total_errors += 1
-                @busy_workers.delete(ex.actor)
-                ready_workers << Actor.spawn_link(&@work_loop)
-                @error_handlers.each { |handler| handler.handle(ex.reason) }
-              end
-            end
-          end
-
+          supervisor_loop
         rescue Exception => ex
           $stderr.print "Fatal error in girl_friday: supervisor for #{name} died.\n"
           $stderr.print("#{ex}\n")
@@ -178,6 +157,35 @@ module GirlFriday
         worker = ready_workers.pop
         @busy_workers << worker
         worker << @persister.pop
+      end
+    end
+
+    def supervisor_loop
+      loop do
+        Actor.receive do |f|
+          f.when(Ready) do |who|
+            on_ready(who)
+            shutdown_complete and return if @shutdown && @busy_workers.size == 0
+          end
+          f.when(Work) do |work|
+            on_work(work)
+          end
+          f.when(Shutdown) do |stop|
+            @shutdown = true
+            @when_shutdown = stop.callback
+            ready_workers.each { |w| w << stop }
+            shutdown_complete and return if @busy_workers.size == 0
+          end
+          f.when(Actor::DeadActorError) do |ex|
+            if !@shutdown
+              # TODO Provide current message contents as error context
+              @total_errors += 1
+              @busy_workers.delete(ex.actor)
+              ready_workers << Actor.spawn_link(&@work_loop)
+              @error_handlers.each { |handler| handler.handle(ex.reason) }
+            end
+          end
+        end
       end
     end
 
