@@ -1,3 +1,4 @@
+require 'weakref'
 require 'thread'
 begin
   # Rubinius
@@ -16,12 +17,22 @@ require 'girl_friday/batch'
 
 module GirlFriday
 
+  @@lock = Mutex.new
+  @@queues = []
+
+  def self.add_queue(ref)
+    @@lock.synchronize do
+      @@queues = @@queues.keep_if { |q| q.weakref_alive? }
+      @@queues << ref
+    end
+  end
+
   def self.queues
-    ObjectSpace.each_object(GirlFriday::WorkQueue).to_a
+    @@queues
   end
 
   def self.status
-    queues.inject({}) { |memo, queue| memo.merge(queue.status) }
+    queues.keep_if { |q| q.weakref_alive? }.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.__getobj__.status) : memo }
   end
 
   ##
@@ -33,7 +44,7 @@ module GirlFriday
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
   def self.shutdown!(timeout=30)
-    qs = queues
+    qs = queues.delete_if { |q| !q.weakref_alive? }
     count = qs.size
 
     if count > 0
@@ -41,7 +52,8 @@ module GirlFriday
       var = ConditionVariable.new
 
       qs.each do |q|
-        q.shutdown do |queue|
+        next if !q.weakref_alive?
+        q.__getobj__.shutdown do |queue|
           m.synchronize do
             count -= 1
             var.signal if count == 0
@@ -52,19 +64,12 @@ module GirlFriday
       m.synchronize do
         var.wait(m, timeout)
       end
-      #puts "girl_friday shutdown complete"
     end
     count
   end
 
 end
 
-begin
-  ObjectSpace.each_object(GirlFriday).to_a
-  at_exit do
-    GirlFriday.shutdown!
-  end
-rescue RuntimeError
-  $stderr.puts "[warn] girl_friday will not shut down cleanly, pass -X+O to JRuby to enable ObjectSpace"
+at_exit do
+  GirlFriday.shutdown!
 end
-

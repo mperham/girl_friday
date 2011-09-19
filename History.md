@@ -4,6 +4,7 @@ Changes
 HEAD
 ---------
 
+* Use WeakRefs instead of ObjectSpace, as that plays better on JRuby.
 * Can now pass a [connection\_pool](https://github.com/mperham/connection_pool) in as a Redis instance.
 * Switch Redis.new to Redis.connect so a :url option can be passed in.
   Nice for using on Heroku with Redis To Go.
