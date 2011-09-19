@@ -8,7 +8,7 @@ $testing = true
 # rbx is 1.8-mode for another month...
 require 'rubygems'
 require 'minitest/autorun'
-require 'timed_queue'
+require 'connection_pool'
 require 'girl_friday'
 require 'flexmock/minitest'
 
