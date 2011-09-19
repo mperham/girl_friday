@@ -22,7 +22,7 @@ module GirlFriday
   def self.add_queue(ref)
     @@lock.synchronize do
       @queues ||= []
-      @queues.keep_if { |q| q.weakref_alive? }
+      @queues.reject! { |q| !q.weakref_alive? }
       @queues << ref
     end
   end

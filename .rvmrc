@@ -1,3 +1,3 @@
 rvm use jruby@gf --create
 export RBXOPT=-Xrbc.db=".rbxdb"
-export JRUBY_OPTS='--1.9 -X+O -J-Djruby.launch.inproc=false'
+export JRUBY_OPTS='--1.9'
