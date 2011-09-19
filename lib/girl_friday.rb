@@ -18,21 +18,21 @@ require 'girl_friday/batch'
 module GirlFriday
 
   @@lock = Mutex.new
-  @@queues = []
 
   def self.add_queue(ref)
     @@lock.synchronize do
-      @@queues = @@queues.keep_if { |q| q.weakref_alive? }
-      @@queues << ref
+      @queues ||= []
+      @queues.keep_if { |q| q.weakref_alive? }
+      @queues << ref
     end
   end
 
   def self.queues
-    @@queues
+    @queues || []
   end
 
   def self.status
-    queues.keep_if { |q| q.weakref_alive? }.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.__getobj__.status) : memo }
+    queues.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.__getobj__.status) : memo }
   end
 
   ##
@@ -44,7 +44,7 @@ module GirlFriday
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
   def self.shutdown!(timeout=30)
-    qs = queues.delete_if { |q| !q.weakref_alive? }
+    qs = queues.select { |q| q.weakref_alive? }
     count = qs.size
 
     if count > 0
