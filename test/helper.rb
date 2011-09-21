@@ -1,18 +1,27 @@
 $testing = true
+puts RUBY_DESCRIPTION
+
+at_exit do
+  if Thread.list.size > 1
+    Thread.list.each do |thread|
+      next if thread.status == 'run'
+      puts "WARNING: lingering threads found.  All threads should be shutdown and garbage collected."
+      p [thread, thread['name']]
+#      puts thread.backtrace.join("\n")
+    end
+  end
+end
 
 # require 'simplecov'
 # SimpleCov.start do
 #   add_filter "/actor.rb"
 # end
 
-# rbx is 1.8-mode for another month...
 require 'rubygems'
 require 'minitest/autorun'
 require 'connection_pool'
 require 'girl_friday'
 require 'flexmock/minitest'
-
-puts RUBY_DESCRIPTION
 
 class MiniTest::Unit::TestCase
 

@@ -8,9 +8,11 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
   def test_should_process_messages
     async_test do |cb|
-      queue = GirlFriday::WorkQueue.new('test') do |msg|
+      queue = GirlFriday::WorkQueue.new('process') do |msg|
         assert_equal 'foo', msg[:text]
-        cb.call
+        queue.shutdown do
+          cb.call
+        end
       end
       queue.push(:text => 'foo')
     end
@@ -18,13 +20,16 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
   def test_should_handle_worker_error
     async_test do |cb|
+      queue = nil
       TestErrorHandler.send(:define_method, :handle) do |ex|
         assert_equal 'oops', ex.message
         assert_equal 'RuntimeError', ex.class.name
-        cb.call
+        queue.shutdown do
+          cb.call
+        end
       end
 
-      queue = GirlFriday::WorkQueue.new('test', :error_handler => TestErrorHandler) do |msg|
+      queue = GirlFriday::WorkQueue.new('error', :error_handler => TestErrorHandler) do |msg|
         raise 'oops'
       end
       queue.push(:text => 'foo')
@@ -33,13 +38,15 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
   def test_should_call_callback_when_complete
     async_test do |cb|
-      queue = GirlFriday::WorkQueue.new('test', :size => 1) do |msg|
+      queue = GirlFriday::WorkQueue.new('callback', :size => 1) do |msg|
         assert_equal 'foo', msg[:text]
         'camel'
       end
       queue.push(:text => 'foo') do |result|
         assert_equal 'camel', result
-        cb.call
+        queue.shutdown do
+          cb.call
+        end
       end
     end
   end
@@ -56,10 +63,12 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
     actual = nil
     async_test do |cb|
-      queue = GirlFriday::WorkQueue.new('image_crawler', :size => 3) do |msg|
+      queue = GirlFriday::WorkQueue.new('status', :size => 3) do |msg|
         mycount = incr.call
         actual = queue.status if mycount == 100
-        cb.call if mycount == total
+        queue.shutdown do
+          cb.call
+        end if mycount == total
       end
       total.times do |idx|
         queue.push(:text => 'foo')
@@ -67,8 +76,8 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
 
     refute_nil actual
-    refute_nil actual['image_crawler']
-    metrics = actual['image_crawler']
+    refute_nil actual['status']
+    metrics = actual['status']
     assert metrics[:total_queued] > 0
     assert metrics[:total_queued] <= total
     assert_equal 3, metrics[:pool_size]
@@ -99,9 +108,11 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
 
     async_test(1.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Store::Redis) do |msg|
+      queue = GirlFriday::WorkQueue.new('redis', :size => 2, :store => GirlFriday::Store::Redis) do |msg|
         incr.call
-        cb.call if count == total
+        queue.shutdown do
+          cb.call
+        end if count == total
       end
       total.times do
         queue.push(:text => 'foo')
@@ -130,9 +141,11 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
 
     async_test(1.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
+      queue = GirlFriday::WorkQueue.new('redis-instance', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
         incr.call
-        cb.call if count == total
+        queue.shutdown do
+          cb.call
+        end if count == total
       end
       total.times do
         queue.push(:text => 'foo')
@@ -161,10 +174,12 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       end
     end
 
-    async_test do |cb|
-      queue = GirlFriday::WorkQueue.new('test', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
+    async_test(1.0) do |cb|
+      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
         incr.call
-        cb.call if count == total
+        queue.shutdown do
+          cb.call
+        end if count == total
       end
       total.times do
         queue.push(:text => 'foo')
@@ -191,20 +206,20 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         queue.push(:text => 'foo')
       end
 
+      assert_equal 1, GirlFriday.queues.size
       count = GirlFriday.shutdown!
       assert_equal 0, count
-      s = queue.status
-      assert_equal 0, s['shutdown'][:busy]
-      assert_equal 2, s['shutdown'][:ready]
       cb.call
     end
   end
 
   def test_should_create_workers_lazily
     async_test do |cb|
-      queue = GirlFriday::Queue.new('shutdown', :size => 2) do |msg|
+      queue = GirlFriday::Queue.new('lazy', :size => 2) do |msg|
         assert_equal 1, queue.instance_variable_get(:@ready_workers).size
-        cb.call
+        queue.shutdown do
+          cb.call
+        end
       end
       refute queue.instance_variable_defined?(:@ready_workers)
       # don't instantiate the worker threads until we actually put
@@ -219,12 +234,17 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     processor = Proc.new do |msg|
       actual = Thread.current.to_s
     end
-    queue = GirlFriday::Queue.new('shutdown', :size => 2, &processor)
-    flexmock(queue).should_receive(:push).zero_or_more_times.and_return do |msg|
-      processor.call(msg)
+    async_test do |cb|
+      queue = GirlFriday::Queue.new('flexmock', :size => 2, &processor)
+      flexmock(queue).should_receive(:push).zero_or_more_times.and_return do |msg|
+        processor.call(msg)
+      end
+      queue.push 'hello world!'
+      assert_equal expected, actual
+      queue.shutdown do
+        cb.call
+      end
     end
-    queue.push 'hello world!'
-    assert_equal expected, actual
   end
 
 end

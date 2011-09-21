@@ -16,6 +16,7 @@ class TestGirlFridayImmediately < MiniTest::Unit::TestCase
     end
     assert_equal 42, queue.push(:start => 41)
     assert_equal 42, queue << { :start => 41 }
+    queue.shutdown
   end
 
   def test_should_process_immediately_with_callback
@@ -23,6 +24,7 @@ class TestGirlFridayImmediately < MiniTest::Unit::TestCase
       msg[:start] + 1
     end
     assert_equal 43, queue.push(:start => 41) { |r| r + 1 }
+    queue.shutdown
   end
 
   def test_should_process_style_idempotently
@@ -45,5 +47,6 @@ class TestGirlFridayImmediately < MiniTest::Unit::TestCase
     GirlFriday::WorkQueue.immediate!
     assert_equal 3, queue.push(:start => 2)
     assert_equal 3, queue << {:start => 2}
+    queue.shutdown
   end
 end

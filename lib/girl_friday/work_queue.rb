@@ -18,8 +18,9 @@ module GirlFriday
       @created_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
       @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
+      @weakref = WeakRef.new(self)
       start
-      GirlFriday.add_queue WeakRef.new(self)
+      GirlFriday.add_queue @weakref
     end
 
     def self.immediate!
@@ -165,7 +166,6 @@ module GirlFriday
         Actor.receive do |f|
           f.when(Ready) do |who|
             on_ready(who)
-            shutdown_complete and return if @shutdown && @busy_workers.size == 0
           end
           f.when(Work) do |work|
             on_work(work)
@@ -173,8 +173,11 @@ module GirlFriday
           f.when(Shutdown) do |stop|
             @shutdown = true
             @when_shutdown = stop.callback
+            @busy_workers.each { |w| w << stop }
             ready_workers.each { |w| w << stop }
-            shutdown_complete and return if @busy_workers.size == 0
+            shutdown_complete
+            GirlFriday.remove_queue @weakref
+            return
           end
           f.when(Actor::DeadActorError) do |ex|
             if !@shutdown

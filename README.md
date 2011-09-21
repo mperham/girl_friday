@@ -45,13 +45,16 @@ In your Rails app, create a `config/initializers/girl_friday.rb` which defines y
       VideoProcessor.transcode(msg)
     end
 
+:size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
+
+You can use a connection pool to share a set of Redis connections with
+other threads and GirlFriday queues using the `connection\_pool` gem:
+
     require 'connection_pool'
-    redis_pool = ConnectionPool.new(:size => 5, :timeout => 5){ Redis.new }
-    CLEAN_FILTER_QUEUE =GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis_pool}]) do |msg|
+    redis_pool = ConnectionPool.new(:size => 5, :timeout => 5) { Redis.new }
+    CLEAN_FILTER_QUEUE = GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis_pool}]) do |msg|
       Filter.clean(msg)
     end
-
-:size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
 
 In your controller action or model, you can call `#push(msg)`
 
@@ -62,6 +65,11 @@ The msg parameter to push is just a Hash whose contents are completely up to you
 Your message processing block should **not** access any instance data or variables outside of the block.  That's shared mutable state and dangerous to touch!  I also strongly recommend your queue processor block be **VERY** short, ideally just a method call or two.  You can unit test those methods easily but not the processor block itself.
 
 You can call `GirlFriday::WorkQueue.immediate!` to process jobs immediately, which is helpful when testing. `GirlFriday::WorkQueue.queue!` will revert this & jobs will be processed by actors.
+
+Queues are not garbage collected until they are shutdown, even if you
+have no reference to them.  Make sure you call `WorkQueue#shutdown` if you are
+dynamically creating them so you don't leak memory.  `GirlFriday.shutdown!` will shut down all
+running queues in the process.
 
 More Detail
 --------------------

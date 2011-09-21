@@ -27,12 +27,24 @@ module GirlFriday
     end
   end
 
+  def self.remove_queue(ref)
+    @@lock.synchronize do
+      @queues.delete ref
+    end
+  end
+
   def self.queues
     @queues || []
   end
 
   def self.status
-    queues.inject({}) { |memo, queue| queue.weakref_alive? ? memo.merge(queue.__getobj__.status) : memo }
+    queues.inject({}) do |memo, queue|
+      begin
+        memo.merge(queue.__getobj__.status)
+      rescue WeakRef::RefError
+      end
+      memo
+    end
   end
 
   ##
@@ -53,7 +65,14 @@ module GirlFriday
 
       qs.each do |q|
         next if !q.weakref_alive?
-        q.__getobj__.shutdown do |queue|
+        begin
+          q.__getobj__.shutdown do |queue|
+            m.synchronize do
+              count -= 1
+              var.signal if count == 0
+            end
+          end
+        rescue WeakRef::RefError
           m.synchronize do
             count -= 1
             var.signal if count == 0
@@ -70,6 +89,9 @@ module GirlFriday
 
 end
 
-at_exit do
-  GirlFriday.shutdown!
+
+unless defined?($testing)
+  at_exit do
+    GirlFriday.shutdown!
+  end
 end
