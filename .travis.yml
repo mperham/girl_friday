@@ -5,4 +5,6 @@ rvm:
 branches:
   only:
     - master
-env: JRUBY_OPTS='--1.9' RBXOPT=-X19
+env:
+  - JRUBY_OPTS='--1.9'
+  - RBXOPT=-X19
