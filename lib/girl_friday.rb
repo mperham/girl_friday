@@ -40,7 +40,7 @@ module GirlFriday
   def self.status
     queues.inject({}) do |memo, queue|
       begin
-        memo.merge(queue.__getobj__.status)
+        memo = memo.merge(queue.__getobj__.status)
       rescue WeakRef::RefError
       end
       memo

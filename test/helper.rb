@@ -18,6 +18,7 @@ end
 # end
 
 require 'rubygems'
+require 'minitest/spec'
 require 'minitest/autorun'
 require 'connection_pool'
 require 'girl_friday'
