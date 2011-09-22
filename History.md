@@ -1,7 +1,7 @@
 Changes
 ================
 
-HEAD
+0.9.5
 ---------
 
 * Refactor thread usage so Queues can be properly shutdown and GC'd [GH-30]
