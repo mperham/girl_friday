@@ -1,8 +1,8 @@
 rvm:
   - 1.9.2
   - jruby
-  - rbx-2.0-1.9
+  - rbx-2.0
 branches:
   only:
     - master
-env: JRUBY_OPTS='--1.9'
+env: JRUBY_OPTS='--1.9' RBXOPT=-X19
