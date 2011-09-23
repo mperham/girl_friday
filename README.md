@@ -1,11 +1,7 @@
 girl\_friday
 ====================
 
-Have a task you want to get done sometime soon but don't want to do it yourself?  Give it to girl\_friday!  From wikipedia:
-
-> The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or
-> one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday
-> alludes to it and may have popularized it.
+![Travis-CI build status](https://secure.travis-ci.org/mperham/girl_friday.png)
 
 girl\_friday is a Ruby library for performing asynchronous tasks.  Often times you don't want to block a web response by performing some task, like sending an email, so you can just use this gem to perform it in the background.  It works with any Ruby application, including Rails 3 applications.
 
@@ -71,10 +67,17 @@ have no reference to them.  Make sure you call `WorkQueue#shutdown` if you are
 dynamically creating them so you don't leak memory.  `GirlFriday.shutdown!` will shut down all
 running queues in the process.
 
+
 More Detail
 --------------------
 
 Please see the [girl\_friday wiki](https://github.com/mperham/girl_friday/wiki) for more detail and advanced options and tuning.  You'll find details on queue persistence with Redis, implementing clean shutdown, querying runtime metrics and SO MUCH MORE!
+
+From wikipedia:
+
+> The term Man Friday has become an idiom, still in mainstream usage, to describe an especially faithful servant or
+> one's best servant or right-hand man. The female equivalent is Girl Friday. The title of the movie His Girl Friday
+> alludes to it and may have popularized it.
 
 
 Thanks
