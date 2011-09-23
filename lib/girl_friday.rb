@@ -81,7 +81,7 @@ module GirlFriday
       end
 
       m.synchronize do
-        var.wait(m, timeout)
+        var.wait(m, timeout) if count != 0
       end
     end
     count
