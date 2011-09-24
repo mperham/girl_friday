@@ -15,6 +15,7 @@ module GirlFriday
 
       @shutdown = false
       @busy_workers = []
+      @ready_workers = nil
       @created_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
       @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
@@ -49,7 +50,7 @@ module GirlFriday
       { @name => {
           :pid => $$,
           :pool_size => @size,
-          :ready => ready_workers.size,
+          :ready => @ready_workers ? @ready_workers.size : 0,
           :busy => @busy_workers.size,
           :backlog => @persister.size,
           :total_queued => @total_queued,
@@ -127,8 +128,10 @@ module GirlFriday
 
     def start
       @supervisor = Actor.spawn do
+        Thread.current[:label] = "#{name}-supervisor"
         supervisor = Actor.current
         @work_loop = Proc.new do
+          Thread.current[:label] = "#{name}-worker"
           while !@shutdown do
             work = Actor.receive
             if !@shutdown

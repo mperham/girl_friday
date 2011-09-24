@@ -6,7 +6,7 @@ at_exit do
     Thread.list.each do |thread|
       next if thread.status == 'run'
       puts "WARNING: lingering threads found.  All threads should be shutdown and garbage collected."
-      p [thread, thread['name']]
+      p [thread, thread[:label], thread.object_id]
 #      puts thread.backtrace.join("\n")
     end
   end
