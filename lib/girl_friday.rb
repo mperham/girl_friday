@@ -17,10 +17,10 @@ require 'girl_friday/batch'
 
 module GirlFriday
 
-  @@lock = Mutex.new
+  @lock = Mutex.new
 
   def self.add_queue(ref)
-    @@lock.synchronize do
+    @lock.synchronize do
       @queues ||= []
       @queues.reject! { |q| !q.weakref_alive? }
       @queues << ref
@@ -28,7 +28,7 @@ module GirlFriday
   end
 
   def self.remove_queue(ref)
-    @@lock.synchronize do
+    @lock.synchronize do
       @queues.delete ref
     end
   end
