@@ -36,7 +36,7 @@ In your Rails app, create a `config/initializers/girl_friday.rb` which defines y
 :size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
 
 In order to use the Redis backend, you must use a connection pool to share a set of Redis connections with
-other threads and GirlFriday queues using the `connection\_pool` gem:
+other threads and GirlFriday queues using the `connection_pool` gem:
 
     require 'connection_pool'
 

@@ -70,17 +70,26 @@ module GirlFriday
       end
     end
 
-    def shutdown
+    def shutdown(&block)
       # Runtime state should never be modified by caller thread,
       # only the Supervisor thread.
-      @supervisor << Shutdown[block_given? ? Proc.new : nil]
+      @supervisor << Shutdown[block]
     end
 
     private
 
+    def running?
+      !@shutdown
+    end
+
+    def handle_error(ex)
+      # Redis network error?  Log and ignore.
+      @error_handlers.each { |handler| handler.handle(ex) }
+    end
+
     def on_ready(who)
       @total_processed += 1
-      if !@shutdown && work = @persister.pop
+      if running? && work = @persister.pop
         who.this << work
         drain
       else
@@ -88,22 +97,21 @@ module GirlFriday
         ready_workers << who.this
       end
     rescue => ex
-      # Redis network error?  Log and ignore.
-      @error_handlers.each { |handler| handler.handle(ex) }
+      handle_error(ex)
     end
 
     def shutdown_complete
       begin
         @when_shutdown.call(self) if @when_shutdown
       rescue Exception => ex
-        @error_handlers.each { |handler| handler.handle(ex) }
+        handle_error(ex)
       end
     end
 
     def on_work(work)
       @total_queued += 1
 
-      if !@shutdown && worker = ready_workers.pop
+      if running? && worker = ready_workers.pop
         @busy_workers << worker
         worker << work
         drain
@@ -111,19 +119,12 @@ module GirlFriday
         @persister << work
       end
     rescue => ex
-      # Redis network error?  Log and ignore.
-      @error_handlers.each { |handler| handler.handle(ex) }
+      handle_error(ex)
     end
 
     def ready_workers
-      @ready_workers ||= begin
-        workers = []
-        @size.times do
-          # start N workers
-          workers << Actor.spawn_link(&@work_loop)
-        end
-        workers
-      end
+      # start N workers
+      @ready_workers ||= Array.new(@size) { Actor.spawn_link(&@work_loop) }
     end
 
     def start
@@ -132,9 +133,9 @@ module GirlFriday
         supervisor = Actor.current
         @work_loop = Proc.new do
           Thread.current[:label] = "#{name}-worker"
-          while !@shutdown do
+          while running? do
             work = Actor.receive
-            if !@shutdown
+            if running?
               result = @processor.call(work.msg)
               work.callback.call(result) if work.callback
               supervisor << Ready[Actor.current]
@@ -155,8 +156,7 @@ module GirlFriday
 
     def drain
       # give as much work to as many ready workers as possible
-      ps = @persister.size
-      todo = ready_workers.size < ps ? ready_workers.size : ps
+      todo = [@persister.size, ready_workers.size].min
       todo.times do
         worker = ready_workers.pop
         @busy_workers << worker
@@ -183,18 +183,18 @@ module GirlFriday
             return
           end
           f.when(Actor::DeadActorError) do |ex|
-            if !@shutdown
+            if running?
               # TODO Provide current message contents as error context
               @total_errors += 1
               @busy_workers.delete(ex.actor)
               ready_workers << Actor.spawn_link(&@work_loop)
-              @error_handlers.each { |handler| handler.handle(ex.reason) }
+              handle_error(ex.reason)
             end
           end
         end
       end
     end
-
   end
+
   Queue = WorkQueue
 end

@@ -4,3 +4,5 @@ Gemfile.lock
 pkg/*
 rbxdb/
 *.rdb
+.idea/*
+
