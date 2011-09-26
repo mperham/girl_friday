@@ -1,7 +1,7 @@
 Changes
 ================
 
-HEAD
+0.9.6
 ---------
 
 * Completely switch to connection\_pool for Redis backend.
