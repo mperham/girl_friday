@@ -42,7 +42,7 @@ other threads and GirlFriday queues using the `connection\_pool` gem:
 
     redis_pool = ConnectionPool.new(:size => 5, :timeout => 5) { Redis.new }
 
-    CLEAN_FILTER_QUEUE = GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => [{ :pool => redis_pool}]) do |msg|
+    CLEAN_FILTER_QUEUE = GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => { :pool => redis_pool }) do |msg|
       Filter.clean(msg)
     end
 
