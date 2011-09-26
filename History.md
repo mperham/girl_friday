@@ -1,6 +1,13 @@
 Changes
 ================
 
+HEAD
+---------
+
+* Completely switch to connection\_pool for Redis backend.
+  The Redis store no longer connects for you automatically, so it's mandatory to use
+  connection\_pool.
+
 0.9.5
 ---------
 

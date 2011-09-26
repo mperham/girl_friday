@@ -23,17 +23,20 @@ module GirlFriday
     class Redis
       def initialize(name, options)
         @opts = options
+        unless @opts[:pool]
+          raise ArgumentError, "you must pass in a :pool"
+        end
         @key = "girl_friday-#{name}-#{environment}"
       end
 
       def push(work)
         val = Marshal.dump(work)
-        redis.rpush(@key, val)
+        redis{ |r| r.rpush(@key, val) }
       end
       alias_method :<<, :push
 
       def pop
-        val = redis.lpop(@key)
+        val = redis{ |r| r.lpop(@key) }
         Marshal.load(val) if val
       end
 
@@ -48,8 +51,12 @@ module GirlFriday
       end
 
       def redis
-        @redis ||= (@opts.delete(:redis) || ::Redis.connect(*@opts))
+        @redis ||= @opts.delete(:pool)
+        @redis.with do |pooled|
+          yield pooled
+        end
       end
     end
+
   end
 end

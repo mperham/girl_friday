@@ -18,7 +18,7 @@ module GirlFriday
       @ready_workers = nil
       @created_at = Time.now.to_i
       @total_processed = @total_errors = @total_queued = 0
-      @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || []))
+      @persister = (options[:store] || Store::InMemory).new(name, (options[:store_config] || {}))
       @weakref = WeakRef.new(self)
       start
       GirlFriday.add_queue @weakref

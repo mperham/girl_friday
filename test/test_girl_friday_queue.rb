@@ -87,78 +87,12 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     assert(metrics[:total_processed] > 0)
   end
 
-  def test_should_persist_with_redis
-    begin
-      require 'redis'
-      redis = Redis.new
-      redis.flushdb
-    rescue LoadError
-      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
-    rescue Errno::ECONNREFUSED
-      return puts 'Skipping redis test, not running locally'
-    end
-
-    mutex = Mutex.new
-    total = 100
-    count = 0
-    incr = Proc.new do
-      mutex.synchronize do
-        count += 1
-      end
-    end
-
-    async_test(1.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('redis', :size => 2, :store => GirlFriday::Store::Redis) do |msg|
-        incr.call
-        queue.shutdown do
-          cb.call
-        end if count == total
-      end
-      total.times do
-        queue.push(:text => 'foo')
-      end
-    end
-  end
-
-  def test_should_persist_with_redis_instance
-    begin
-      require 'redis'
-      redis = Redis.new
-      redis.flushdb
-    rescue LoadError
-      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
-    rescue Errno::ECONNREFUSED
-      return puts 'Skipping redis test, not running locally'
-    end
-
-    mutex = Mutex.new
-    total = 100
-    count = 0
-    incr = Proc.new do
-      mutex.synchronize do
-        count += 1
-      end
-    end
-
-    async_test(1.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('redis-instance', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
-        incr.call
-        queue.shutdown do
-          cb.call
-        end if count == total
-      end
-      total.times do
-        queue.push(:text => 'foo')
-      end
-    end
-  end
-
   def test_should_persist_with_redis_connection_pool
     begin
       require 'redis'
       require 'connection_pool'
-      redis = ConnectionPool.new(:size => 5, :timeout => 5){ Redis.new }
-      redis.flushdb
+      pool = ConnectionPool.new(:size => 5, :timeout => 2){ Redis.new }
+      pool.flushdb
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
     rescue Errno::ECONNREFUSED
@@ -174,8 +108,8 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       end
     end
 
-    async_test(1.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis }]) do |msg|
+    async_test(2.0) do |cb|
+      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => { :pool => pool }) do |msg|
         incr.call
         queue.shutdown do
           cb.call
@@ -183,6 +117,14 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       end
       total.times do
         queue.push(:text => 'foo')
+      end
+    end
+  end
+
+  def test_should_raise_if_no_store_config_passed_in_for_redis_backend
+    assert_raises(ArgumentError) do
+      GirlFriday::WorkQueue.new('raise-test', :store => GirlFriday::Store::Redis) do |msg|
+        # doing work
       end
     end
   end

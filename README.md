@@ -33,22 +33,16 @@ In your Rails app, create a `config/initializers/girl_friday.rb` which defines y
       ImageCrawler.process(msg)
     end
 
-    SCRAPE_QUEUE = GirlFriday::WorkQueue.new(:scrape_sites, :size => 4, :store => GirlFriday::Store::Redis, :store_config => [{ :host => 'host' }]) do |msg|
-      Page.scrape(msg)
-    end
-
-    TRANSCODE_QUEUE = GirlFriday::WorkQueue.new(:scrape_sites, :size => 4, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => $redis }]) do |msg|
-      VideoProcessor.transcode(msg)
-    end
-
 :size is the number of workers to spin up and defaults to 5.  Keep in mind, ActiveRecord defaults to a connection pool size of 5 so if your workers are accessing the database you'll want to ensure that the connection pool is large enough by modifying `config/database.yml`.
 
-You can use a connection pool to share a set of Redis connections with
+In order to use the Redis backend, you must use a connection pool to share a set of Redis connections with
 other threads and GirlFriday queues using the `connection\_pool` gem:
 
     require 'connection_pool'
+
     redis_pool = ConnectionPool.new(:size => 5, :timeout => 5) { Redis.new }
-    CLEAN_FILTER_QUEUE = GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => [{ :redis => redis_pool}]) do |msg|
+
+    CLEAN_FILTER_QUEUE = GirlFriday::WorkQueue.new(:clean_filter, :store => GirlFriday::Store::Redis, :store_config => [{ :pool => redis_pool}]) do |msg|
       Filter.clean(msg)
     end
 
