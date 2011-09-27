@@ -118,6 +118,7 @@ class TestGirlFriday < MiniTest::Unit::TestCase
       total.times do
         queue.push(:text => 'foo')
       end
+      refute_nil queue.status['redis-pool'][:backlog]
     end
   end
 
