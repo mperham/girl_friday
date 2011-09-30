@@ -34,6 +34,9 @@ class MiniTest::Unit::TestCase
     q = TimedQueue.new
     yield Proc.new { q << nil }
     q.timed_pop(time)
+  ensure
+    count = GirlFriday.shutdown!(1)
+    puts "Unable to shutdown queue (#{count})" if count != 0
   end
 
 end
