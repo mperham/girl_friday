@@ -40,6 +40,16 @@ class TestBatch < MiniTest::Unit::TestCase
     sleep 0.1
   end
 
+  def test_empty_batch
+    batch = GirlFriday::Batch.new(:size => 4) do |msg|
+      sleep msg
+      'x'
+    end
+    values = batch.results
+    values.must_be_kind_of Array
+    values.must_equal []
+  end
+
   def test_streaming_batch_api
     batch = GirlFriday::Batch.new(nil, :size => 4) do |msg|
       sleep msg
@@ -54,7 +64,7 @@ class TestBatch < MiniTest::Unit::TestCase
     b = Time.now
     values.must_be_kind_of Array
     values.must_equal %w(x x x x)
-    assert_in_delta 0.1, (b - a), 0.1
+    assert_in_delta 0.2, (b - a), 0.1
 
     assert_raises ArgumentError do
       batch << 0.1

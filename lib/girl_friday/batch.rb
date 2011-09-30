@@ -12,15 +12,14 @@ module GirlFriday
   #
   # TODO Errors are not handled well at all.
   class Batch
-    def initialize(enumerable, options, &block)
+    def initialize(enumerable=nil, options, &block)
       @queue = GirlFriday::Queue.new(:batch, options, &block)
       @complete = 0
+      @size = 0
+      @results = []
       if enumerable
         @size = enumerable.count
         @results = Array.new(@size)
-      else
-        @size = 0
-        @results = []
       end
       @lock = Mutex.new
       @condition = ConditionVariable.new
