@@ -16,7 +16,7 @@ class TestBatch < MiniTest::Unit::TestCase
     # asking for the results should block
     results = batch.results(1.0)
     c = Time.now
-    assert_in_delta(0.5, (c - b), 0.1)
+    assert_in_delta(0.5, (c - b), 0.15)
 
     assert_equal 10, results.size
     assert_kind_of Time, results[0]

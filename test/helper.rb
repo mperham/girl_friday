@@ -10,6 +10,7 @@ at_exit do
     Thread.list.each do |thread|
       next if thread.status == 'run'
       puts "WARNING: lingering threads found.  All threads should be shutdown and garbage collected."
+      puts "This is normal if a test failed so a queue did not get shutdown."
       p [thread, thread[:label]]
     end
   end
