@@ -39,4 +39,25 @@ class TestBatch < MiniTest::Unit::TestCase
     # http://redmine.ruby-lang.org/issues/5342
     sleep 0.1
   end
+
+  def test_streaming_batch_api
+    batch = GirlFriday::Batch.new(nil, :size => 4) do |msg|
+      sleep msg
+      'x'
+    end
+    a = Time.now
+    batch << 0.1
+    batch << 0.1
+    batch << 0.1
+    batch << 0.1
+    values = batch.results
+    b = Time.now
+    values.must_be_kind_of Array
+    values.must_equal %w(x x x x)
+    assert_in_delta 0.1, (b - a), 0.1
+
+    assert_raises ArgumentError do
+      batch << 0.1
+    end
+  end
 end

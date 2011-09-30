@@ -15,14 +15,21 @@ module GirlFriday
     def initialize(enumerable, options, &block)
       @queue = GirlFriday::Queue.new(:batch, options, &block)
       @complete = 0
-      @size = enumerable.count
-      @results = Array.new(@size)
+      if enumerable
+        @size = enumerable.count
+        @results = Array.new(@size)
+      else
+        @size = 0
+        @results = []
+      end
       @lock = Mutex.new
       @condition = ConditionVariable.new
+      @frozen = false
       start(enumerable)
     end
 
     def results(timeout=nil)
+      @frozen = true
       @lock.synchronize do
         @condition.wait(@lock, timeout) if @complete != @size
         @queue.shutdown
@@ -30,17 +37,34 @@ module GirlFriday
       end
     end
 
+    def push(msg)
+      raise ArgumentError, "Batch is frozen, you cannot push more items into it" if @frozen
+      @lock.synchronize do
+        @results << nil
+        @size += 1
+        index = @results.size - 1
+        @queue.push(msg) do |result|
+          completion(result, index)
+        end
+      end
+    end
+    alias_method :<<, :push
+
     private
 
     def start(operations)
       operations.each_with_index do |packet, index|
         @queue.push(packet) do |result|
-          @lock.synchronize do
-            @complete += 1
-            @results[index] = result
-            @condition.signal if @complete == @size
-          end
+          completion(result, index)
         end
+      end if operations
+    end
+
+    def completion(result, index)
+      @lock.synchronize do
+        @complete += 1
+        @results[index] = result
+        @condition.signal if @complete == @size
       end
     end
 
