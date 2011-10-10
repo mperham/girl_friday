@@ -14,7 +14,7 @@ module GirlFriday
     basedir = File.expand_path(File.dirname(__FILE__) + '/../../server')
 
     set :views,  "#{basedir}/views"
-    set :public, "#{basedir}/public"
+    set :public_folder, "#{basedir}/public"
     set :static, true
 
     helpers do
