@@ -9,7 +9,7 @@ girl\_friday is a Ruby library for performing asynchronous tasks.  Often times y
 Installation
 ------------------
 
-We recommend using [JRuby 1.6+](http://jruby.org) or [Rubinius 2.0+](http://rubini.us) with girl\_friday.  Both are excellent options for executing Ruby these days.
+We recommend using [JRuby 1.6+](http://jruby.org) or [Rubinius 2.0+](http://rubini.us) with girl\_friday.  Both are excellent options for executing Ruby these days. Make sure you set them to 1.9 mode.
 
     gem install girl_friday
 
