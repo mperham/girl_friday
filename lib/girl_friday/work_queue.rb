@@ -11,7 +11,7 @@ module GirlFriday
       @name = name.to_s
       @size = options[:size] || 5
       @processor = block
-      @error_handlers = (Array(options[:error_handler]) || ErrorHandler.default).map(&:new)
+      @error_handlers = (Array(options[:error_handler] || ErrorHandler.default)).map(&:new)
 
       @shutdown = false
       @busy_workers = []

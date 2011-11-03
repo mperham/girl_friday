@@ -36,6 +36,20 @@ class TestGirlFriday < MiniTest::Unit::TestCase
     end
   end
 
+  def test_should_use_a_default_error_handler_when_none_specified
+    async_test do |cb|
+      queue = GirlFriday::WorkQueue.new('error') do |msg|
+      end
+      queue.shutdown do
+        cb.call
+      end
+      queue.push(:text => 'foo') # Redundant
+
+      # Not an ideal method, but I can't see a better way without complex stubbing.
+      assert queue.instance_eval { @error_handlers }.length > 0
+    end
+  end
+
   def test_should_call_callback_when_complete
     async_test do |cb|
       queue = GirlFriday::WorkQueue.new('callback', :size => 1) do |msg|
