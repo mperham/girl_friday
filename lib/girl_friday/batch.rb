@@ -12,7 +12,7 @@ module GirlFriday
   #
   # TODO Errors are not handled well at all.
   class Batch
-    def initialize(enumerable=nil, options, &block)
+    def initialize(enumerable=nil, options={}, &block)
       @queue = GirlFriday::Queue.new(:batch, options, &block)
       @complete = 0
       @size = 0

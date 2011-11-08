@@ -1,6 +1,6 @@
 require 'helper'
 
-class TestGirlFriday < MiniTest::Unit::TestCase
+class TestGirlFridayQueue < MiniTest::Unit::TestCase
 
   class TestErrorHandler
     include MiniTest::Assertions

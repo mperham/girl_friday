@@ -7,10 +7,13 @@ class UrlProcessor
   URLS = %w(http://www.bing.com http://www.google.com http://www.yahoo.com)
 
   def parallel
-    batch = GirlFriday::Batch.new(URLS, :size => 3) do |url|
+    batch = GirlFriday::Batch.new(nil, :size => 3) do |url|
       html = open(url)
       doc = Nokogiri::HTML(html.read)
       doc.css('span').count
+    end
+    URLS.each do |url|
+      batch << url
     end
     p URLS.zip(batch.results)
   end

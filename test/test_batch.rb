@@ -41,7 +41,7 @@ class TestBatch < MiniTest::Unit::TestCase
   end
 
   def test_empty_batch
-    batch = GirlFriday::Batch.new(:size => 4) do |msg|
+    batch = GirlFriday::Batch.new(nil, :size => 4) do |msg|
       sleep msg
       'x'
     end
