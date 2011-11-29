@@ -1,9 +1,10 @@
 Changes
 ================
 
-HEAD
+0.9.7
 ---------
 
+* Fix error handling (xshay)
 * Add streaming batch support for adding elements to a batch one at a
   time rather than all at once.
 
