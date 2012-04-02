@@ -77,7 +77,7 @@ From wikipedia:
 Thanks
 --------------------
 
-[Carbon Five](http://carbonfive.com), I write and maintain girl\_friday on their clock.
+[Carbon Five](http://carbonfive.com), I wrote and maintained girl\_friday on their clock.
 
 This gem contains a copy of the Rubinius Actor API, modified to work on any Ruby VM.  Thanks to Evan Phoenix, MenTaLguY and the Rubinius project for permission to use and distribute this code.
 
