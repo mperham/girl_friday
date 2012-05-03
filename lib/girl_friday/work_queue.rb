@@ -189,6 +189,7 @@ module GirlFriday
               @busy_workers.delete(ex.actor)
               ready_workers << Actor.spawn_link(&@work_loop)
               handle_error(ex.reason)
+              drain
             end
           end
         end

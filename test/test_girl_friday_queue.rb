@@ -36,6 +36,25 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
     end
   end
 
+  def test_should_handle_worker_error_with_retry
+    async_test do |cb|
+      TestErrorHandler.send(:define_method, :handle) do |ex|
+      end
+
+      queue = GirlFriday::WorkQueue.new('error', :error_handler => TestErrorHandler, :size => 1) do |msg|
+        begin
+          raise 'oops' if msg == 1
+          queue.shutdown do
+            cb.call
+          end
+        ensure
+          queue.push(0)
+        end
+      end
+      queue.push(1)
+    end
+  end
+
   def test_should_use_a_default_error_handler_when_none_specified
     async_test do |cb|
       queue = GirlFriday::WorkQueue.new('error') do |msg|
