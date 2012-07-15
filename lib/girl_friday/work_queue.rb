@@ -78,7 +78,7 @@ module GirlFriday
     end
 
     def working?
-      @busy_workers.size > 0 || @total_queued != @total_processed + @total_errors + @persister.size
+      @busy_workers.size > 0
     end
 
     private
