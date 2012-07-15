@@ -48,7 +48,7 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
             cb.call
           end
         ensure
-          queue.push(0)
+          queue.push(0) unless msg == 0
         end
       end
       queue.push(1)
@@ -185,6 +185,32 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
       assert_equal 1, GirlFriday.queues.size
       count = GirlFriday.shutdown!
       assert_equal 0, count
+      cb.call
+    end
+  end
+
+  def test_should_allow_in_progress_work_to_finish
+    mutex = Mutex.new
+    total = 20
+    count = 0
+    incr = Proc.new do
+      mutex.synchronize do
+        count += 1
+      end
+    end
+
+    async_test(10) do |cb|
+      queue = GirlFriday::WorkQueue.new('finish', :size => 10) do |msg|
+        sleep 1
+        incr.call
+      end
+      total.times do
+        queue.push(:text => 'foo')
+      end
+
+      GirlFriday.shutdown!
+      assert_equal total, queue.instance_variable_get("@total_processed")
+      assert_equal total, count
       cb.call
     end
   end

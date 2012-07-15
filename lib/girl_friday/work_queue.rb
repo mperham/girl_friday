@@ -76,6 +76,10 @@ module GirlFriday
       @supervisor << Shutdown[block]
     end
 
+    def working?
+      @busy_workers.size > 0 || @total_queued != @total_processed + @total_errors
+    end
+
     private
 
     def running?
@@ -174,13 +178,18 @@ module GirlFriday
             on_work(work)
           end
           f.when(Shutdown) do |stop|
-            @shutdown = true
-            @when_shutdown = stop.callback
-            @busy_workers.each { |w| w << stop }
-            ready_workers.each { |w| w << stop }
-            shutdown_complete
-            GirlFriday.remove_queue @weakref
-            return
+            if !working?
+              @shutdown = true
+              @when_shutdown = stop.callback
+              @busy_workers.each { |w| w << stop }
+              ready_workers.each { |w| w << stop }
+              shutdown_complete
+              GirlFriday.remove_queue @weakref
+              return
+            else
+              Thread.pass
+              shutdown(&stop.callback)
+            end
           end
           f.when(Actor::DeadActorError) do |ex|
             if running?
