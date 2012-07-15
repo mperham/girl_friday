@@ -48,7 +48,7 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
             cb.call
           end
         ensure
-          queue.push(0) unless msg == 0
+          queue.push(0)
         end
       end
       queue.push(1)
@@ -191,7 +191,7 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
 
   def test_should_allow_in_progress_work_to_finish
     mutex = Mutex.new
-    total = 20
+    total = 8
     count = 0
     incr = Proc.new do
       mutex.synchronize do

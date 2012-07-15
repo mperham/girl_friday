@@ -14,6 +14,7 @@ module GirlFriday
       @error_handlers = (Array(options[:error_handler] || ErrorHandler.default)).map(&:new)
 
       @shutdown = false
+      @shutting_down = false
       @busy_workers = []
       @ready_workers = nil
       @created_at = Time.now.to_i
@@ -77,7 +78,7 @@ module GirlFriday
     end
 
     def working?
-      @busy_workers.size > 0 || @total_queued != @total_processed + @total_errors
+      @busy_workers.size > 0 || @total_queued != @total_processed + @total_errors + @persister.size
     end
 
     private
@@ -93,7 +94,7 @@ module GirlFriday
 
     def on_ready(who)
       @total_processed += 1
-      if running? && work = @persister.pop
+      if !shutting_down? && running? && work = @persister.pop
         who.this << work
         drain
       else
@@ -112,10 +113,13 @@ module GirlFriday
       end
     end
 
+    def shutting_down?
+      !!@shutting_down
+    end
+
     def on_work(work)
       @total_queued += 1
-
-      if running? && worker = ready_workers.pop
+      if !shutting_down? && running? && worker = ready_workers.pop
         @busy_workers << worker
         worker << work
         drain
@@ -178,6 +182,7 @@ module GirlFriday
             on_work(work)
           end
           f.when(Shutdown) do |stop|
+            @shutting_down = true
             if !working?
               @shutdown = true
               @when_shutdown = stop.callback
