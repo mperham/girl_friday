@@ -14,6 +14,7 @@ module GirlFriday
       @error_handlers = (Array(options[:error_handler] || ErrorHandler.default)).map(&:new)
 
       @shutdown = false
+      @shutting_down = false
       @busy_workers = []
       @ready_workers = nil
       @created_at = Time.now.to_i
@@ -76,6 +77,10 @@ module GirlFriday
       @supervisor << Shutdown[block]
     end
 
+    def working?
+      @busy_workers.size > 0
+    end
+
     private
 
     def running?
@@ -89,7 +94,7 @@ module GirlFriday
 
     def on_ready(who)
       @total_processed += 1
-      if running? && work = @persister.pop
+      if !shutting_down? && running? && work = @persister.pop
         who.this << work
         drain
       else
@@ -108,10 +113,13 @@ module GirlFriday
       end
     end
 
+    def shutting_down?
+      !!@shutting_down
+    end
+
     def on_work(work)
       @total_queued += 1
-
-      if running? && worker = ready_workers.pop
+      if !shutting_down? && running? && worker = ready_workers.pop
         @busy_workers << worker
         worker << work
         drain
@@ -174,13 +182,19 @@ module GirlFriday
             on_work(work)
           end
           f.when(Shutdown) do |stop|
-            @shutdown = true
-            @when_shutdown = stop.callback
-            @busy_workers.each { |w| w << stop }
-            ready_workers.each { |w| w << stop }
-            shutdown_complete
-            GirlFriday.remove_queue @weakref
-            return
+            @shutting_down = true
+            if !working?
+              @shutdown = true
+              @when_shutdown = stop.callback
+              @busy_workers.each { |w| w << stop }
+              ready_workers.each { |w| w << stop }
+              shutdown_complete
+              GirlFriday.remove_queue @weakref
+              return
+            else
+              Thread.pass
+              shutdown(&stop.callback)
+            end
           end
           f.when(Actor::DeadActorError) do |ex|
             if running?
