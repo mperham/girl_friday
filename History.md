@@ -1,6 +1,12 @@
 Changes
 ================
 
+0.10.0
+---------
+
+* Update connection_pool to latest
+* Handle shutdown more gracefully, wait for work to be finished
+
 0.9.7
 ---------
 
