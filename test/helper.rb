@@ -40,3 +40,18 @@ class MiniTest::Unit::TestCase
   end
 
 end
+
+module Faker
+  def initialize
+    @number_of_calls = 0
+  end
+
+  def number_of_calls
+    @number_of_calls
+  end
+
+
+  def count(*args,&blk)
+    @number_of_calls += 1
+  end
+end

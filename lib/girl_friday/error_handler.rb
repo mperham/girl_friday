@@ -3,7 +3,7 @@ module GirlFriday
 
     def self.default
       handlers = [Stderr]
-      handlers << Hoptoad if defined?(HoptoadNotifier)
+      handlers << Airbrake if defined?(::Airbrake)
       handlers
     end
 
@@ -14,12 +14,10 @@ module GirlFriday
       end
     end
 
-    class Hoptoad
+    class Airbrake
       def handle(ex)
-        HoptoadNotifier.notify_or_ignore(ex)
+        ::Airbrake.notify_or_ignore(ex)
       end
     end
-    Airbrake = Hoptoad
-
   end
 end
