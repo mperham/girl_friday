@@ -2,7 +2,7 @@ require 'weakref'
 require 'thread'
 begin
   # Rubinius
-  require 'actor'
+  require 'girl_friday/actor'
   require 'girl_friday/monkey_patches'
 rescue LoadError
   # Others
