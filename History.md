@@ -1,6 +1,12 @@
 Changes
 ================
 
+HEAD
+---------
+
+* Switch to Rubinius::Actor gem (jc00ke)
+  Avoids a nameclash for projects that define their own Actor class.
+
 0.10.0
 ---------
 
