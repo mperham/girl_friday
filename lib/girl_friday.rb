@@ -1,19 +1,21 @@
 require 'weakref'
 require 'thread'
-begin
-  # Rubinius
-  require 'actor'
-  require 'girl_friday/monkey_patches'
-rescue LoadError
-  # Others
-  require 'girl_friday/actor'
-end
 
 require 'girl_friday/version'
 require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
 require 'girl_friday/batch'
+
+begin
+  # Rubinius or JRuby
+  require 'rubinius/actor'
+  require 'girl_friday/monkey_patches'
+  GirlFriday::WorkQueue::Actor = Rubinius::Actor
+rescue LoadError
+  # Others
+  require 'girl_friday/actor'
+end
 
 module GirlFriday
 
