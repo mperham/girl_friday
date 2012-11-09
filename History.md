@@ -4,6 +4,14 @@ Changes
 HEAD
 ---------
 
+0.11.1
+---------
+
+* Rescue RuntimeError when trying to load rubinius-actor on CRuby
+
+0.11.0
+---------
+
 * Remove old Rubinius 1.2.3 monkeypatches
 * Remove default `at_exit` handle which was causing issues [#67]
 * Support the rubinius-actor gem for jruby/rbx (jc00ke)
