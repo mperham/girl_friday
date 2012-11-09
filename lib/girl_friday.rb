@@ -10,10 +10,10 @@ require 'girl_friday/batch'
 begin
   # Rubinius or JRuby
   require 'rubinius/actor'
-  require 'girl_friday/monkey_patches'
   GirlFriday::WorkQueue::Actor = Rubinius::Actor
-rescue LoadError
-  # Others
+rescue RuntimeError
+  # Rubinius::Actor will raise a RuntimeError when
+  # required on !(Rubinius || JRuby)
   require 'girl_friday/actor'
 end
 

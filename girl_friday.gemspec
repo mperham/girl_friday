@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
   s.add_dependency              'connection_pool', '~> 0.9.0'
+  s.add_dependency              'rubinius-actor'
   s.add_development_dependency  'sinatra', '~> 1.3'
   s.add_development_dependency  'rake'
 end
