@@ -13,7 +13,7 @@ We recommend using [JRuby 1.6+](http://jruby.org) or [Rubinius 2.0+](http://rubi
 
     gem install girl_friday
 
-girl\_friday does not support Ruby 1.8 (MRI) because of its poor threading support.  Ruby 1.9 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do **not** use the original mysql gem).
+girl\_friday does not support Ruby 1.8 (MRI) because of its lack of native threading.  Ruby 1.9.3 will work reasonably well if you use gems that release the GIL for network I/O (mysql2 is a good example of this, do **not** use the original mysql gem).
 
 
 Usage
