@@ -34,10 +34,6 @@ class TestBatch < MiniTest::Unit::TestCase
     assert_equal 'x', results[1]
     assert_nil results[2]
     assert_equal 'x', results[3]
-
-    # Necessary to work around a Ruby 1.9.2 bug
-    # http://redmine.ruby-lang.org/issues/5342
-    sleep 0.1
   end
 
   def test_empty_batch

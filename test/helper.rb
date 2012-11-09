@@ -1,4 +1,3 @@
-$testing = true
 puts RUBY_DESCRIPTION
 
 at_exit do

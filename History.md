@@ -4,7 +4,9 @@ Changes
 HEAD
 ---------
 
-* Switch to Rubinius::Actor gem (jc00ke)
+* Remove old Rubinius 1.2.3 monkeypatches
+* Remove default `at_exit` handle which was causing issues [#67]
+* Support the rubinius-actor gem for jruby/rbx (jc00ke)
   Avoids a nameclash for projects that define their own Actor class.
 
 0.10.0

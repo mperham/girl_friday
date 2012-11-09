@@ -90,10 +90,3 @@ module GirlFriday
   end
 
 end
-
-
-unless defined?($testing)
-  at_exit do
-    GirlFriday.shutdown!
-  end
-end
