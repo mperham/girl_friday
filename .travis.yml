@@ -1,7 +1,7 @@
 language: ruby
 rvm:
   - 1.9.3
-  - jruby
+  - jruby-19mode
   - rbx-19mode
 matrix:
   allow_failures:
@@ -9,4 +9,3 @@ matrix:
 branches:
   only:
     - master
-env: JRUBY_OPTS='--1.9'
