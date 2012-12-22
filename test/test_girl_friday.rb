@@ -9,8 +9,8 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
     describe '.status' do
       before do
-        q1 = GirlFriday::Queue.new(:q1) do; end
-        q2 = GirlFriday::Queue.new(:q2) do; end
+        GirlFriday::Queue.new(:q1) do; end
+        GirlFriday::Queue.new(:q2) do; end
       end
       it 'provides a status structure for each live queue' do
         hash = GirlFriday.status
@@ -22,8 +22,8 @@ class TestGirlFriday < MiniTest::Unit::TestCase
 
     describe '.shutdown!' do
       before do
-        q1 = GirlFriday::Queue.new(:q1) do; end
-        q2 = GirlFriday::Queue.new(:q2) do; end
+        GirlFriday::Queue.new(:q1) do; end
+        GirlFriday::Queue.new(:q2) do; end
       end
       it 'provides a status structure for each live queue' do
         a = Time.now
