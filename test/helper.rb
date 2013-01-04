@@ -38,6 +38,20 @@ class MiniTest::Unit::TestCase
     puts "Unable to shutdown queue (#{count})" if count != 0
   end
 
+  def with_redis_connection
+    begin
+      require 'redis'
+      require 'connection_pool'
+      pool = ConnectionPool.new(:size => 5, :timeout => 2){ Redis.new }
+      pool.with_connection {|redis| redis.flushdb }
+    rescue LoadError
+      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
+    rescue Errno::ECONNREFUSED
+      return puts 'Skipping redis test, not running locally'
+    end
+
+    yield pool
+  end
 end
 
 module Faker

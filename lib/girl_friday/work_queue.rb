@@ -4,6 +4,7 @@ module GirlFriday
     Ready = Struct.new(:this)
     Work = Struct.new(:msg, :callback)
     Shutdown = Struct.new(:callback)
+    WorkCheck = Struct.new(:work_check)
 
     attr_reader :name
     def initialize(name, options={}, &block)
@@ -46,6 +47,10 @@ module GirlFriday
     end
     alias_method :push, :push_async
     alias_method :<<, :push_async
+
+    def check_for_work
+      @supervisor << WorkCheck[]
+    end
 
     def status
       { @name => {
@@ -130,6 +135,12 @@ module GirlFriday
       handle_error(ex)
     end
 
+    def on_work_check
+      drain if !shutting_down? && running?
+    rescue => ex
+      handle_error(ex)
+    end
+
     def ready_workers
       # start N workers
       @ready_workers ||= Array.new(@size) { Actor.spawn_link(&@work_loop) }
@@ -180,6 +191,9 @@ module GirlFriday
           end
           f.when(Work) do |work|
             on_work(work)
+          end
+          f.when(WorkCheck) do
+            on_work_check
           end
           f.when(Shutdown) do |stop|
             @shutting_down = true

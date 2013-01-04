@@ -49,6 +49,16 @@ module GirlFriday
     end
   end
 
+  # Asks each queue to check with its persistence store for work
+  def self.check_for_work
+    queues.each do |queue|
+      begin
+        queue.__getobj__.check
+      rescue WeakRef::RefError
+      end
+    end
+  end
+
   ##
   # Notify girl_friday to shutdown ASAP.  Workers will not pick up any
   # new work; any new work pushed onto the queues will be pushed onto the
