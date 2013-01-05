@@ -58,6 +58,16 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         assert !GirlFriday.polling?
       end
     end
+
+    describe '.check_for_work' do
+      before do
+        GirlFriday::Queue.new(:q1) do; end
+        GirlFriday::Queue.new(:q2) do; end
+      end
+      it 'should not throw an error' do
+        GirlFriday.check_for_work
+      end
+    end
   end
 
 end

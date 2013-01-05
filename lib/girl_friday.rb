@@ -53,7 +53,7 @@ module GirlFriday
   def self.check_for_work
     queues.each do |queue|
       begin
-        queue.__getobj__.check
+        queue.__getobj__.check_for_work
       rescue WeakRef::RefError
       end
     end
