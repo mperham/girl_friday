@@ -1,10 +1,11 @@
-source "http://rubygems.org"
+source :rubygems
 
-# Specify your gem's dependencies in girl_friday.gemspec
+gem 'rake'
+
+group :test do
+  gem 'minitest'
+  gem 'redis'
+  gem 'flexmock-minitest'
+end
+
 gemspec
-
-# Needed for testing only!
-gem 'minitest'
-gem 'redis'
-gem 'connection_pool'
-gem 'flexmock-minitest'

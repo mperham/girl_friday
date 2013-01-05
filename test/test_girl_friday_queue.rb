@@ -125,7 +125,7 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
       require 'redis'
       require 'connection_pool'
       pool = ConnectionPool.new(:size => 5, :timeout => 2){ Redis.new }
-      pool.with_connection {|redis| redis.flushdb }
+      pool.with {|redis| redis.flushdb }
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
     rescue Errno::ECONNREFUSED
