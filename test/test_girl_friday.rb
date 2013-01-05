@@ -31,6 +31,32 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         assert_in_delta 0, Time.now - a, 0.1
         assert_equal 0, GirlFriday.queues.size
       end
+      it 'stops polling' do
+        GirlFriday.begin_polling
+        GirlFriday.shutdown!
+        assert !GirlFriday.polling?
+      end
+    end
+
+    describe '.begin_polling' do
+      it 'does not poll unless started' do
+        assert !GirlFriday.polling?
+      end
+      it 'polls once started' do
+        assert !GirlFriday.polling?
+        GirlFriday.begin_polling
+        assert GirlFriday.polling?
+      end
+    end
+
+    describe '.end_polling' do
+      before do
+        GirlFriday.begin_polling
+      end
+      it 'stops polling' do
+        GirlFriday.end_polling
+        assert !GirlFriday.polling?
+      end
     end
   end
 

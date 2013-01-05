@@ -36,7 +36,7 @@ module GirlFriday
   end
 
   def self.queues
-    @queues || []
+    @queues ||= []
   end
 
   def self.status
@@ -59,6 +59,35 @@ module GirlFriday
     end
   end
 
+  def self.polling_interval
+    @polling_interval ||= 15
+  end
+
+  def self.polling_interval=(value)
+    @polling_interval = value
+  end
+
+  def self.begin_polling
+    @pollster ||= Thread.new do
+      loop do
+        sleep polling_interval
+        check_for_work
+      end
+    end
+    polling?
+  end
+
+  def self.end_polling
+    unless pollster.nil?
+      pollster.kill
+      @pollster = nil
+    end
+  end
+
+  def self.polling?
+    !!(!pollster.nil? && ['sleep', 'run'].include?(@pollster.status))
+  end
+
   ##
   # Notify girl_friday to shutdown ASAP.  Workers will not pick up any
   # new work; any new work pushed onto the queues will be pushed onto the
@@ -68,6 +97,7 @@ module GirlFriday
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
   def self.shutdown!(timeout=30)
+    end_polling
     qs = queues.select { |q| q.weakref_alive? }
     count = qs.size
 
@@ -97,6 +127,12 @@ module GirlFriday
       end
     end
     count
+  end
+
+  private
+
+  def self.pollster
+    @pollster ||= nil
   end
 
 end
