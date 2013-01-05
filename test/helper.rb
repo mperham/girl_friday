@@ -15,10 +15,12 @@ at_exit do
   end
 end
 
-# require 'simplecov'
-# SimpleCov.start do
-#   add_filter "/actor.rb"
-# end
+unless ENV['CI']
+  require 'simplecov'
+  SimpleCov.start do
+    add_filter "/actor.rb"
+  end
+end
 
 require 'rubygems'
 require 'minitest/spec'
