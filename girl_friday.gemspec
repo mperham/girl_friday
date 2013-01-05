@@ -4,7 +4,6 @@ require "./lib/girl_friday/version"
 Gem::Specification.new do |spec|
   spec.add_dependency             'connection_pool', '~> 1.0'
   spec.add_dependency             'rubinius-actor'
-  spec.add_development_dependency 'rake'
   spec.add_development_dependency 'sinatra', '~> 1.3'
   spec.authors       = ["Mike Perham"]
   spec.email         = ["mperham@gmail.com"]
