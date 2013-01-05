@@ -4,6 +4,12 @@ Changes
 HEAD
 ---------
 
+0.11.2
+---------
+
+* Update connectio\_pool to latest (sferik)
+* Clean up gemspec, Gemfile & add bundler install tasks (sferik)
+
 0.11.1
 ---------
 
@@ -20,7 +26,7 @@ HEAD
 0.10.0
 ---------
 
-* Update connection_pool to latest
+* Update connection\_pool to latest
 * Handle shutdown more gracefully, wait for work to be finished
 
 0.9.7
