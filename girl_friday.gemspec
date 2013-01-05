@@ -11,6 +11,7 @@ Gem::Specification.new do |spec|
   spec.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   spec.files         = `git ls-files`.split("\n").reject { |path| path =~ /rails_app/}
   spec.homepage      = "https://github.com/mperham/girl_friday"
+  spec.licenses      = ['MIT']
   spec.name          = "girl_friday"
   spec.platform      = Gem::Platform::RUBY
   spec.require_paths = ["lib"]
