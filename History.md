@@ -7,7 +7,7 @@ HEAD
 0.11.2
 ---------
 
-* Update connectio\_pool to latest (sferik)
+* Update connection\_pool to latest (sferik)
 * Clean up gemspec, Gemfile & add bundler install tasks (sferik)
 
 0.11.1
