@@ -15,10 +15,12 @@ at_exit do
   end
 end
 
-# require 'simplecov'
-# SimpleCov.start do
-#   add_filter "/actor.rb"
-# end
+unless ENV['CI']
+  require 'simplecov'
+  SimpleCov.start do
+    add_filter "/actor.rb"
+  end
+end
 
 require 'rubygems'
 require 'minitest/spec'
@@ -30,9 +32,9 @@ require 'flexmock/minitest'
 class MiniTest::Unit::TestCase
 
   def async_test(time=0.5)
-    q = TimedQueue.new
+    q = ConnectionPool::TimedStack.new
     yield Proc.new { q << nil }
-    q.timed_pop(time)
+    q.pop(time)
   ensure
     count = GirlFriday.shutdown!(1)
     puts "Unable to shutdown queue (#{count})" if count != 0
@@ -43,7 +45,7 @@ class MiniTest::Unit::TestCase
       require 'redis'
       require 'connection_pool'
       pool = ConnectionPool.new(:size => 5, :timeout => 2){ Redis.new }
-      pool.with_connection {|redis| redis.flushdb }
+      pool.with {|redis| redis.flushdb }
     rescue LoadError
       return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
     rescue Errno::ECONNREFUSED

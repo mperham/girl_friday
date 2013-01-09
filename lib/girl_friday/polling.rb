@@ -1,5 +1,3 @@
-require 'ruby-debug'
-
 module GirlFriday
   module Polling
     DefaultPollingInterval = 15
