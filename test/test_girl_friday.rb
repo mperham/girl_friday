@@ -3,6 +3,9 @@ require 'helper'
 class TestGirlFriday < MiniTest::Unit::TestCase
 
   describe 'GirlFriday' do
+    before do
+      GirlFriday::Polling.polling_interval = 1
+    end
     after do
       GirlFriday.shutdown!
     end
@@ -32,30 +35,30 @@ class TestGirlFriday < MiniTest::Unit::TestCase
         assert_equal 0, GirlFriday.queues.size
       end
       it 'stops polling' do
-        GirlFriday.begin_polling
+        GirlFriday::Polling.begin_polling
         GirlFriday.shutdown!
-        assert !GirlFriday.polling?
+        assert !GirlFriday::Polling.polling?
       end
     end
 
     describe '.begin_polling' do
       it 'does not poll unless started' do
-        assert !GirlFriday.polling?
+        assert !GirlFriday::Polling.polling?
       end
       it 'polls once started' do
-        assert !GirlFriday.polling?
-        GirlFriday.begin_polling
-        assert GirlFriday.polling?
+        assert !GirlFriday::Polling.polling?
+        GirlFriday::Polling.begin_polling
+        assert GirlFriday::Polling.polling?
       end
     end
 
     describe '.end_polling' do
       before do
-        GirlFriday.begin_polling
+        GirlFriday::Polling.begin_polling
       end
       it 'stops polling' do
-        GirlFriday.end_polling
-        assert !GirlFriday.polling?
+        GirlFriday::Polling.end_polling
+        assert !GirlFriday::Polling.polling?
       end
     end
 

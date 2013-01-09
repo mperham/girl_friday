@@ -146,7 +146,7 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
     end
   end
 
-  def test_polling_redis_for_work
+  def test_checking_redis_for_work
     with_redis_connection do |pool|
       mutex = Mutex.new
       total = 5

@@ -17,8 +17,9 @@ rescue RuntimeError
   require 'girl_friday/actor'
 end
 
-module GirlFriday
+require 'girl_friday/polling'
 
+module GirlFriday
   @lock = Mutex.new
 
   def self.add_queue(ref)
@@ -59,33 +60,12 @@ module GirlFriday
     end
   end
 
-  def self.polling_interval
-    @polling_interval ||= 15
-  end
-
-  def self.polling_interval=(value)
-    @polling_interval = value
-  end
-
   def self.begin_polling
-    @pollster ||= Thread.new do
-      loop do
-        sleep polling_interval
-        check_for_work
-      end
-    end
-    polling?
+    Polling.begin_polling
   end
 
   def self.end_polling
-    unless pollster.nil?
-      pollster.kill
-      @pollster = nil
-    end
-  end
-
-  def self.polling?
-    !!(!pollster.nil? && ['sleep', 'run'].include?(@pollster.status))
+    Polling.end_polling
   end
 
   ##
@@ -97,13 +77,21 @@ module GirlFriday
   # Note that shutdown! just works with existing queues.  If you create a
   # new queue, it will act as normal.
   def self.shutdown!(timeout=30)
-    end_polling
     qs = queues.select { |q| q.weakref_alive? }
     count = qs.size
+
+    count += 1 if !Polling.shutting_down?
 
     if count > 0
       m = Mutex.new
       var = ConditionVariable.new
+
+      Polling.end_polling do
+        m.synchronize do
+          count -= 1
+          var.signal if count == 0
+        end
+      end
 
       qs.each do |q|
         next if !q.weakref_alive?
@@ -127,12 +115,6 @@ module GirlFriday
       end
     end
     count
-  end
-
-  private
-
-  def self.pollster
-    @pollster ||= nil
   end
 
 end
