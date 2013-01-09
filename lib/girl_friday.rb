@@ -6,18 +6,18 @@ require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
 require 'girl_friday/batch'
+require 'girl_friday/polling'
 
 begin
   # Rubinius or JRuby
   require 'rubinius/actor'
   GirlFriday::WorkQueue::Actor = Rubinius::Actor
+  GirlFriday::Polling::Actor = Rubinius::Actor
 rescue RuntimeError
   # Rubinius::Actor will raise a RuntimeError when
   # required on !(Rubinius || JRuby)
   require 'girl_friday/actor'
 end
-
-require 'girl_friday/polling'
 
 module GirlFriday
   @lock = Mutex.new
