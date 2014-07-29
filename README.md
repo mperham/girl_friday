@@ -1,7 +1,5 @@
-girl\_friday
-====================
+# Please use Brandon Hilkert's [sucker\_punch](https://github.com/brandonhilkert/sucker_punch) instead of `girl_friday` now.
 
-# Please use Brandon Hilkert's [sucker\_punch](https://github.com/brandonhilkert/sucker_punch) library in preference to `girl_friday` now.
 
 girl\_friday is a Ruby library for performing asynchronous tasks.  Often times you don't want to block a web response by performing some task, like sending an email, so you can just use this gem to perform it in the background.  It works with any Ruby application, including Rails 3 applications.
 
