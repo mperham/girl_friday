@@ -6,11 +6,13 @@ require 'girl_friday/work_queue'
 require 'girl_friday/error_handler'
 require 'girl_friday/persistence'
 require 'girl_friday/batch'
+require 'girl_friday/polling'
 
 begin
   # Rubinius or JRuby
   require 'rubinius/actor'
   GirlFriday::WorkQueue::Actor = Rubinius::Actor
+  GirlFriday::Polling::Actor = Rubinius::Actor
 rescue RuntimeError
   # Rubinius::Actor will raise a RuntimeError when
   # required on !(Rubinius || JRuby)
@@ -18,7 +20,6 @@ rescue RuntimeError
 end
 
 module GirlFriday
-
   @lock = Mutex.new
 
   def self.add_queue(ref)
@@ -36,7 +37,7 @@ module GirlFriday
   end
 
   def self.queues
-    @queues || []
+    @queues ||= []
   end
 
   def self.status
@@ -47,6 +48,24 @@ module GirlFriday
       end
       memo
     end
+  end
+
+  # Asks each queue to check with its persistence store for work
+  def self.check_for_work
+    queues.each do |queue|
+      begin
+        queue.__getobj__.check_for_work
+      rescue WeakRef::RefError
+      end
+    end
+  end
+
+  def self.begin_polling
+    Polling.begin_polling
+  end
+
+  def self.end_polling
+    Polling.end_polling
   end
 
   ##
@@ -61,9 +80,18 @@ module GirlFriday
     qs = queues.select { |q| q.weakref_alive? }
     count = qs.size
 
+    count += 1 if !Polling.shutting_down?
+
     if count > 0
       m = Mutex.new
       var = ConditionVariable.new
+
+      Polling.end_polling do
+        m.synchronize do
+          count -= 1
+          var.signal if count == 0
+        end
+      end
 
       qs.each do |q|
         next if !q.weakref_alive?

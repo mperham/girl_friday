@@ -121,37 +121,69 @@ class TestGirlFridayQueue < MiniTest::Unit::TestCase
   end
 
   def test_should_persist_with_redis_connection_pool
-    begin
-      require 'redis'
-      require 'connection_pool'
-      pool = ConnectionPool.new(:size => 5, :timeout => 2){ Redis.new }
-      pool.with {|redis| redis.flushdb }
-    rescue LoadError
-      return puts "Skipping redis test, 'redis' gem not found: #{$!.message}"
-    rescue Errno::ECONNREFUSED
-      return puts 'Skipping redis test, not running locally'
-    end
+    with_redis_connection do |pool|
+      mutex = Mutex.new
+      total = 100
+      count = 0
+      incr = Proc.new do
+        mutex.synchronize do
+          count += 1
+        end
+      end
 
-    mutex = Mutex.new
-    total = 100
-    count = 0
-    incr = Proc.new do
-      mutex.synchronize do
-        count += 1
+      async_test(2.0) do |cb|
+        queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => { :pool => pool }) do |msg|
+          incr.call
+          queue.shutdown do
+            cb.call
+          end if count == total
+        end
+        total.times do
+          queue.push(:text => 'foo')
+        end
+        refute_nil queue.status['redis-pool'][:backlog]
       end
     end
+  end
 
-    async_test(2.0) do |cb|
-      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => { :pool => pool }) do |msg|
+  def test_checking_redis_for_work
+    with_redis_connection do |pool|
+      mutex = Mutex.new
+      total = 5
+      count = 0
+      incr = Proc.new do
+        mutex.synchronize do
+          count += 1
+        end
+      end
+
+      # Put stuff on the redis queue
+      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 0, :store => GirlFriday::Store::Redis, :store_config => { :pool => pool }) do |msg|
         incr.call
-        queue.shutdown do
-          cb.call
-        end if count == total
+        queue.shutdown if count == total
       end
       total.times do
         queue.push(:text => 'foo')
       end
-      refute_nil queue.status['redis-pool'][:backlog]
+
+      sleep 0.5 # Need to let these values get stored by redis
+      assert_equal total, queue.status['redis-pool'][:backlog]
+      queue.shutdown
+
+      # Rebuild a redis queue with workers (simulates another queue coming online say in a different process)
+      count = 0
+      queue = GirlFriday::WorkQueue.new('redis-pool', :size => 2, :store => GirlFriday::Store::Redis, :store_config => { :pool => pool }) do |msg|
+        incr.call
+        queue.shutdown if count == total
+      end
+      assert_equal total, queue.status['redis-pool'][:backlog]
+
+      queue.check_for_work
+
+      sleep 0.5 # Need to let our jobs get processed
+      assert_equal 0, queue.status['redis-pool'][:backlog]
+      assert_equal total, queue.status['redis-pool'][:total_processed]
+
     end
   end
 
