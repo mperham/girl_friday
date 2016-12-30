@@ -144,9 +144,16 @@ module GirlFriday
           while running? do
             work = Actor.receive
             if running?
-              result = @processor.call(work.msg)
-              work.callback.call(result) if work.callback
-              supervisor << Ready[Actor.current]
+              begin
+                result = @processor.call(work.msg)
+                work.callback.call(result) if work.callback
+              rescue NameError => ex
+                $stderr.print "Processor error in girl_friday for #{name}.\n"
+                $stderr.print("#{ex}\n")
+                $stderr.print("#{ex.backtrace.join("\n")}\n")
+              ensure
+                supervisor << Ready[Actor.current]
+              end
             end
           end
         end
